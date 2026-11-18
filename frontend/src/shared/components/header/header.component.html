@@ -1,0 +1,22 @@
+<header class="editorial-header">
+  <div class="wrap header-grid">
+    <portal-brand/>
+    <button type="button" class="button outline header-toggle" (click)="open.set(!open())"
+      [attr.aria-expanded]="open()" aria-controls="public-navigation">☰ Menu</button>
+    <div class="header-tools" [class.expanded]="open()" id="public-navigation">
+      <nav class="editorial-nav" aria-label="Navegação principal">
+        @for (item of links; track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page"
+             [routerLinkActiveOptions]="{exact:item.path === '/'}" (click)="open.set(false)">{{item.label}}</a>
+        }
+        <a class="icon-button" routerLink="/acervo" fragment="busca" aria-label="Buscar no acervo" (click)="open.set(false)"><portal-icon name="search"/></a>
+      </nav>
+      <div class="actions header-actions">
+        <a class="button outline" routerLink="/acervo" (click)="open.set(false)"><portal-icon name="layers"/> Explorar acervo</a>
+        <a class="button" routerLink="/contribuir" (click)="open.set(false)"><portal-icon name="upload"/> Contribuir com uma memória</a>
+        <a class="header-login" routerLink="/entrar" (click)="open.set(false)">Área administrativa</a>
+      </div>
+    </div>
+  </div>
+  <div class="institutional-strip"><div class="wrap"><institutional-logos/></div></div>
+</header>

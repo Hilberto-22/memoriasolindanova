@@ -1,0 +1,5 @@
+<label>Arquivos
+    <input #picker type="file" multiple accept=".jpeg,.jpg,.png,.webp,.pdf,.mp3,.wav,.mp4" (change)="select(picker)">
+  </label><p class="muted">Até cinco arquivos de 20 MB cada. JPEG, PNG, WebP, PDF, MP3, WAV ou MP4.</p>
+  @if (error()) {<p class="error" role="alert">{{error()}}</p>}
+  @if (names().length) {<ul>@for (name of names(); track $index) {<li>{{name}}</li>}</ul>}

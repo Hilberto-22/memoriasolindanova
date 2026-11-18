@@ -1,0 +1,6 @@
+<page-title title="Coleções" description="Explore as memórias de Olinda Nova do Maranhão por tema."/>
+    <section class="wrap section">
+      @if (collections.state().phase === 'loading') {<loading-state/>}
+      @else if (collections.state().phase === 'error') {<error-state (retry)="collections.refresh()"/>}
+      @else {<div class="collection-grid">@for (item of collections.state().data; track item.slug) {<collection-card [item]="item"/>}</div>}
+    </section>

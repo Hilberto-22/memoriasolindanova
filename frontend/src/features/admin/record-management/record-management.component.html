@@ -1,0 +1,17 @@
+<div class="section-title"><h1>Acervo</h1><a class="button" routerLink="/admin/acervo/novo">Cadastrar registro</a></div>
+<section class="card card-body">
+  <search-bar [value]="query().get('q') ?? ''" (searched)="search($event)"/>
+  @if (result()?.phase === 'loading') {<loading-state/>}
+  @else if (result()?.phase === 'error') {<p class="error" role="alert">Não foi possível carregar os registros.</p>}
+  @else if (result()?.data; as page) {
+    @if (page.items.length) {
+      <div class="table-scroll"><table><thead><tr><th scope="col">ID</th><th scope="col">Título</th><th scope="col">Coleção</th><th scope="col">Ação</th></tr></thead>
+        <tbody>@for (item of page.items; track item.id) {
+          <tr><td>{{item.id}}</td><td><a [routerLink]="['/acervo',item.id]">{{item.title}}</a></td><td>{{item.collection}}</td>
+            <td><a [routerLink]="['/admin/acervo',item.id,'editar']">Editar</a></td></tr>
+        }</tbody>
+      </table></div>
+      <app-pagination [page]="page.page" [total]="pages(page.total,page.size)" (changed)="search(query().get('q') ?? '',$event)"/>
+    } @else {<empty-state message="Nenhum registro publicado encontrado."/>}
+  }
+</section>

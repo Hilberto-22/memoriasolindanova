@@ -1,0 +1,5 @@
+@if (total() > 1) {<nav class="actions pagination" aria-label="Paginação">
+    <button class="button outline" [disabled]="page() <= 0" (click)="changed.emit(page()-1)">Anterior</button>
+    <span aria-live="polite">Página {{page()+1}} de {{total()}}</span>
+    <button class="button outline" [disabled]="page() >= total()-1" (click)="changed.emit(page()+1)">Próxima</button>
+  </nav>}

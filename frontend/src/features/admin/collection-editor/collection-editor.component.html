@@ -1,0 +1,27 @@
+<h1>Coleções</h1>
+<div class="management-grid">
+  <section class="card card-body">
+    <h2>Coleções cadastradas</h2>
+    @if (data.state().phase === 'loading') {<loading-state/>}
+    @else if (data.state().phase === 'error') {<error-state (retry)="data.refresh()"/>}
+    @else {
+      <ul class="management-list">@for (item of data.state().data; track item.slug) {
+        <li><span>{{item.title}} <small class="muted">({{item.count}})</small></span><button class="button outline" type="button" (click)="select(item)" [disabled]="busy()">Editar</button></li>
+      }</ul>
+    }
+  </section>
+  <form class="card card-body filter-fields" [formGroup]="form" (ngSubmit)="save()">
+    <h2>{{editing() ? 'Editar coleção' : 'Nova coleção'}}</h2>
+    <label>Identificador<input formControlName="slug" [readOnly]="editing()" maxlength="50" placeholder="exemplo-de-colecao" required></label>
+    <label>Título<input formControlName="title" maxlength="150" required></label>
+    <label>Descrição<textarea formControlName="description" maxlength="400"></textarea></label>
+    <editorial-image-picker label="Foto de capa" [selected]="form.controls.coverMemory.value" [disabled]="busy()"
+      (selectedChange)="form.controls.coverMemory.setValue($event)"/>
+    @if (form.invalid && form.touched) {<p class="error" role="alert">Preencha o título e use letras minúsculas, números e hífens no identificador.</p>}
+    @if (error()) {<p class="error" role="alert">{{error()}}</p>}
+    @if (message()) {<p role="status">{{message()}}</p>}
+    <div class="actions"><button class="button" [disabled]="busy()">Salvar coleção</button>
+      @if (editing()) {<button class="button outline" type="button" (click)="select()" [disabled]="busy()">Nova coleção</button>}
+    </div>
+  </form>
+</div>

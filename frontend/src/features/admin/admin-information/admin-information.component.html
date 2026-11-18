@@ -1,0 +1,15 @@
+<h1>{{title}}</h1>
+    @if (title === 'Conta administrativa') {
+      @if (user.state().phase === 'loading') {<loading-state/>}
+      @else if (user.state().phase === 'error') {<error-state (retry)="user.refresh()"/>}
+      @else {
+        <div class="card card-body">
+          <h2>{{user.state().data?.name}}</h2>
+          <p><strong>Perfil:</strong> Administrador</p>
+          <p>Esta é a única conta administrativa da plataforma, com acesso a todas as funcionalidades: acervo, contribuições, coleções, mapa, linha do tempo, relatórios e configurações.</p>
+          <p>O usuário e a senha são definidos pelo responsável técnico na configuração do servidor. Para recuperar ou alterar o acesso, solicite a atualização dessas credenciais e a reinicialização do backend.</p>
+        </div>
+      }
+    } @else {
+      <div class="card card-body"><h2>Identidade institucional</h2><p>Maranhão de Memórias — Acervo Digital de Olinda Nova do Maranhão.</p></div>
+    }

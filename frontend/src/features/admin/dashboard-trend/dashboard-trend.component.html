@@ -1,0 +1,15 @@
+<section class="dashboard-chart">
+  <h2><portal-icon name="chart"/> Contribuições nos últimos 30 dias</h2>
+  <svg class="trend-chart" viewBox="0 0 400 150" aria-hidden="true">
+    <path d="M18 24H382M18 50H382M18 76H382M18 102H382M18 128H382" stroke="#e2d8c8" fill="none"/>
+    @if (line()) {
+      <polygon [attr.points]="'18,128 ' + line() + ' 382,128'" fill="#e0ebd6"/>
+      <polyline [attr.points]="line()" stroke="#225c42" stroke-width="2.5" fill="none"/>
+      @for (item of points(); track item.label) {<circle [attr.cx]="item.x" [attr.cy]="item.y" r="2.5" fill="#103c2b"/>}
+    }
+  </svg>
+  <div class="trend-labels"><span>{{days()[0]?.label?.split('-')?.reverse()?.join('/')}}</span><span>{{days()[days().length-1]?.label?.split('-')?.reverse()?.join('/')}}</span></div>
+  <details><summary>{{total()}} contribuições no período</summary>
+    <ul class="trend-values">@for (day of days(); track day.label) {<li>{{day.label.split('-').reverse().join('/')}} — {{day.count}}</li>}</ul>
+  </details>
+</section>

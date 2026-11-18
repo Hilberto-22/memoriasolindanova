@@ -1,0 +1,9 @@
+<h1>Relatórios</h1>
+    @if (data.state().phase === 'loading') {<loading-state/>}
+    @else if (data.state().phase === 'error') {<error-state (retry)="data.refresh()"/>}
+    @else if (data.state().data; as dashboard) {
+      <div class="table-scroll"><table><thead><tr><th scope="col">Coleção</th><th scope="col">Registros publicados</th></tr></thead>
+        <tbody>@for (item of dashboard.byCollection; track item.slug) {<tr><td>{{item.title}}</td><td>{{item.count}}</td></tr>}</tbody>
+      </table></div>
+      <p><button class="button" (click)="download()">Baixar CSV</button></p>
+    }

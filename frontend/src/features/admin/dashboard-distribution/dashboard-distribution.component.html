@@ -1,0 +1,11 @@
+<section class="dashboard-chart">
+  <h2><portal-icon [name]="icon()"/> {{heading()}}</h2>
+  <div class="distribution-body">
+    <div class="donut" [style.background]="gradient()" aria-hidden="true"><span>{{total()}}</span></div>
+    @if (legend().length) {
+      <ul class="chart-legend">@for (row of legend(); track row.label) {
+        <li><span [style.background]="row.color"></span>{{row.label}} · {{row.count}} ({{row.percent.toFixed(1).replace('.',',')}}%)</li>
+      }</ul>
+    } @else {<p class="muted">Ainda sem dados.</p>}
+  </div>
+</section>

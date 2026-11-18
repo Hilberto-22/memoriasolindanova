@@ -1,0 +1,14 @@
+
+ARG DOCKER_LIBRARY_REGISTRY=docker.io/library
+FROM ${DOCKER_LIBRARY_REGISTRY}/maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src src
+RUN mvn -B -DskipTests package
+
+FROM ${DOCKER_LIBRARY_REGISTRY}/eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/acervo-0.1.0.jar app.jar
+USER 65534
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

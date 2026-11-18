@@ -1,0 +1,49 @@
+<h1>História da cidade</h1>
+<p>Publique a história, as tradições, a bandeira, o hino e outras informações da cidade. Os conteúdos salvos ficam visíveis para todos, sem login.</p>
+<p><a routerLink="/historia-da-cidade">Ver página pública →</a></p>
+@if (message()) { <p role="status">{{message()}}</p> }
+@if (error()) { <p class="error" role="alert">{{error()}}</p> }
+<div class="management-grid">
+  <section class="card card-body">
+    <h2>Informações publicadas</h2>
+    @if (data.state().phase === 'loading') { <loading-state /> }
+    @else if (data.state().phase === 'error') { <error-state (retry)="data.refresh()" /> }
+    @else {
+      <ul class="management-list">
+        @for (item of data.state().data; track item.id) {
+          <li><span><strong>{{item.title}}</strong><br><small>{{themeLabel(item.category)}} · {{periodLabel(item)}}</small></span>
+            <button class="button outline" type="button" (click)="select(item)" [disabled]="busy()" [attr.aria-label]="'Editar ' + item.title">Editar</button>
+          </li>
+        }
+      </ul>
+      @if (!data.state().data?.length) { <empty-state message="Nenhuma informação publicada. Cadastre o primeiro conteúdo ao lado." /> }
+    }
+  </section>
+  <form class="card card-body filter-fields" [formGroup]="form" (ngSubmit)="save()">
+    <h2>{{editing() === null ? 'Nova informação' : 'Editar informação'}}</h2>
+    <fieldset class="history-editor-fields" [disabled]="busy()">
+      <label>Título<input formControlName="title" maxlength="180" required></label>
+      <label>Tema<select formControlName="category">@for (item of themes; track item.value) { <option [value]="item.value">{{item.label}}</option> }</select></label>
+      <label>Conteúdo<textarea formControlName="content" rows="12" maxlength="20000" required></textarea></label>
+      <label>Nome do período (opcional)<input formControlName="period" maxlength="120" placeholder="Ex.: Século XX, Anos 1990, Tradição atual"></label>
+      <p class="muted" id="history-date-help">As datas são opcionais e servem de referência para a ordenação. Para períodos aproximados, informe uma data de referência e descreva a aproximação no nome do período. Sem data, o conteúdo aparece ao final.</p>
+      <div class="form-grid">
+        <label>Data inicial de referência<input type="date" formControlName="startDate" min="0001-01-01" max="9999-12-31" aria-describedby="history-date-help"></label>
+        <label>Data final (opcional)<input type="date" formControlName="endDate" min="0001-01-01" max="9999-12-31" aria-describedby="history-date-help"></label>
+      </div>
+      @if (form.hasError('dateRange') && form.touched) { <p class="error" role="alert">A data final exige uma data inicial e não pode ser anterior a ela.</p> }
+      <label>Fontes e referências<textarea formControlName="source" maxlength="1000" placeholder="Documentos, autores e referências consultadas"></textarea></label>
+      <editorial-image-picker label="Registro do acervo relacionado (opcional)" [imagesOnly]="false" [selected]="form.controls.memoryId.value"
+        [disabled]="busy()" (selectedChange)="form.controls.memoryId.setValue($event)" />
+      <p class="muted">Vincule um registro publicado para exibir sua imagem e dar acesso aos arquivos, como a bandeira ou o áudio do hino. <a routerLink="/admin/acervo/novo">Cadastrar material no acervo</a>.</p>
+    </fieldset>
+    @if (form.invalid && form.touched) { <p class="error" role="alert">Preencha o título e o conteúdo e confira as datas e os limites dos campos.</p> }
+    <div class="actions">
+      <button class="button" [disabled]="busy()">{{busy() ? 'Processando…' : 'Salvar e publicar'}}</button>
+      @if (editing() !== null) { <button class="button outline" type="button" (click)="select()" [disabled]="busy()">Nova informação</button> }
+    </div>
+    @if (editing() !== null && !busy()) {
+      <confirm-dialog title="Remover informação" message="Este conteúdo será removido da página pública da cidade." action="Remover informação" (confirmed)="remove(editing()!)" />
+    }
+  </form>
+</div>

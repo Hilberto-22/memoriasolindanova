@@ -1,0 +1,2 @@
+<div #canvas class="map card" [class.map-preview]="preview()" [attr.aria-label]="preview() ? 'Prévia do mapa' : 'Mapa interativo das memórias'"></div>
+    @if (failed()) {<error-state message="O mapa não carregou. Os registros permanecem disponíveis na lista." (retry)="initialize()"/>}

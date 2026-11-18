@@ -1,0 +1,15 @@
+<div class="admin-shell">
+  <admin-sidebar id="admin-navigation" [class.expanded]="open()" (chosen)="open.set(false)"/>
+  <div class="admin-main">
+    <header class="admin-top">
+      <button class="button outline admin-menu" type="button" [attr.aria-expanded]="open()" aria-controls="admin-navigation" (click)="open.set(!open())">☰ Menu</button>
+      <strong>Painel Administrativo</strong>
+      <search-bar (searched)="search($event)"/>
+      <a class="icon-button" routerLink="/admin/contribuicoes" aria-label="Ver contribuições"><portal-icon name="bell"/></a>
+      @if (user.state().data?.name; as name) {<span class="admin-account"><b>{{name}}</b><small>Administrador</small></span>}
+      <button class="button outline" type="button" (click)="logout()" [disabled]="loggingOut()">{{loggingOut() ? 'Saindo…' : 'Sair'}}</button>
+    </header>
+    @if (error()) {<p class="state error" role="alert">{{error()}}</p>}
+    <main id="conteudo" tabindex="-1" class="admin-content"><router-outlet/></main>
+  </div>
+</div>

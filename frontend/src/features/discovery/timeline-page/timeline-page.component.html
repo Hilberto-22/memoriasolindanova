@@ -1,0 +1,18 @@
+<page-title title="Linha do Tempo - História" description="Navegue pelas décadas a partir dos registros do acervo."/>
+    <section class="wrap section">
+      <p><a routerLink="/historia-da-cidade">Conheça também a história, as tradições, a bandeira e o hino da cidade →</a></p>
+      @if (data.state().phase === 'loading') {<loading-state/>}
+      @else if (data.state().phase === 'error') {<error-state (retry)="data.refresh()"/>}
+      @else {
+        <div class="catalog-toolbar">
+          <label>Década<select #selector (change)="decade.set(selector.value)"><option value="">Todas as décadas</option>
+            @for (year of decades(); track year) {<option [value]="year">Anos {{year}}</option>}</select></label>
+          <label>Ordenação<select #sort (change)="direction.set(sort.value)">
+            <option value="oldest">Mais antigos primeiro</option><option value="newest">Mais recentes primeiro</option>
+          </select></label>
+        </div>
+        @if (items().length) {
+          <ol class="timeline">@for (item of items(); track item.id) {<li><timeline-item [item]="item"/></li>}</ol>
+        } @else {<empty-state message="Ainda não há registros publicados para este período."/>}
+      }
+    </section>

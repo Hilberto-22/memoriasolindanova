@@ -1,0 +1,36 @@
+<section class="admin-banner">
+  @if (editorial.state().data?.feature?.imageUrl; as image) {<img [src]="image" alt="">}
+  <div><h1>Maranhão de Memórias</h1><h2>Acervo Digital de Olinda Nova do Maranhão</h2>
+    <p>Preservando a história, a cultura e as memórias da nossa gente.</p></div>
+</section>
+@if (data.state().phase === 'loading') {<loading-state/>}
+@else if (data.state().phase === 'error') {<error-state (retry)="data.refresh()"/>}
+@else if (data.state().data; as dashboard) {
+  <div class="dashboard-metrics">
+    <dashboard-metric label="Registros publicados" icon="layers" tone="primary" [value]="dashboard.published"/>
+    <dashboard-metric label="Fotografias" icon="photo" [value]="types().get('Fotografia') ?? 0"/>
+    <dashboard-metric label="Documentos" icon="document" [value]="types().get('Documento') ?? 0"/>
+    <dashboard-metric label="Relatos" icon="book" [value]="types().get('Relato') ?? 0"/>
+    <dashboard-metric label="Contribuições pendentes" icon="clock" tone="gold" [value]="dashboard.pending"/>
+    <dashboard-metric label="Colaboradores" icon="people" [value]="dashboard.collaborators"/>
+    <dashboard-metric label="Coleções" icon="folder" [value]="dashboard.collections"/>
+  </div>
+  <div class="dashboard-charts">
+    <dashboard-distribution heading="Acervo por tipo de material" icon="photo" [rows]="dashboard.byType"/>
+    <dashboard-trend [days]="dashboard.byDay"/>
+    <dashboard-distribution heading="Status das contribuições" icon="document" [rows]="statuses()"/>
+  </div>
+  <section class="dashboard-table">
+    <div class="section-title"><div class="heading-with-icon"><portal-icon name="upload"/><h2>Últimas contribuições</h2></div>
+      <a class="button" routerLink="/admin/contribuicoes">Ver todas as contribuições →</a></div>
+    @if (dashboard.recent.length) {
+      <div class="table-scroll"><table><thead><tr><th scope="col">Colaborador</th><th scope="col">Tipo de material</th><th scope="col">Título</th><th scope="col">Data de envio</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
+        <tbody>@for (item of dashboard.recent; track item.id) {
+          <tr><td>{{item.name}}</td><td>{{item.type}}</td><td>{{item.title}}</td><td>{{item.createdAt | date:'dd/MM/yyyy'}}</td>
+            <td><status-badge [status]="item.status"/></td>
+            <td><a routerLink="/admin/contribuicoes" [queryParams]="{registro:item.id}">{{item.status === 'PENDING' ? 'Revisar' : 'Ver'}}</a></td></tr>
+        }</tbody>
+      </table></div>
+    } @else {<empty-state message="Ainda não há contribuições."/>}
+  </section>
+}

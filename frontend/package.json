@@ -1,0 +1,26 @@
+{
+  "name": "maranhao-de-memorias",
+  "private": true,
+  "scripts": {
+    "start": "ng serve --proxy-config proxy.json",
+    "build": "ng build",
+    "test": "node --test tests/city-history.test.cjs"
+  },
+  "dependencies": {
+    "@angular/common": "20.3.31",
+    "@angular/compiler": "20.3.31",
+    "@angular/core": "20.3.31",
+    "@angular/forms": "20.3.31",
+    "@angular/platform-browser": "20.3.31",
+    "@angular/router": "20.3.31",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1",
+    "zone.js": "0.15.1"
+  },
+  "devDependencies": {
+    "@angular/build": "20.3.37",
+    "@angular/cli": "20.3.37",
+    "@angular/compiler-cli": "20.3.31",
+    "typescript": "5.9.3"
+  }
+}

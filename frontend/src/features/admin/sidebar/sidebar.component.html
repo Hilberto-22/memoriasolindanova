@@ -1,0 +1,9 @@
+<aside class="sidebar">
+  <portal-brand/>
+  <nav aria-label="Administração">
+    @for (item of links; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page"
+        [routerLinkActiveOptions]="{exact:item.path === '/admin'}" (click)="chosen.emit()"><portal-icon [name]="item.icon"/> {{item.label}}</a>
+    }
+  </nav>
+</aside>

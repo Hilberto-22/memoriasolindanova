@@ -1,0 +1,26 @@
+<h1>Editar registro</h1>
+@if (record.state().phase === 'loading' || collections.state().phase === 'loading') {<loading-state/>}
+@else if (record.state().phase === 'error' || collections.state().phase === 'error') {
+  <error-state (retry)="record.refresh(); collections.refresh()"/>
+} @else {
+  <form class="card card-body form-grid" [formGroup]="form" (ngSubmit)="save()">
+    <label class="full">Título<input formControlName="title" maxlength="180" required></label>
+    <label>Categoria<input formControlName="category" maxlength="100" required></label>
+    <label>Coleção<select formControlName="collectionSlug" required>
+      @for (item of collections.state().data; track item.slug) {<option [value]="item.slug">{{item.title}}</option>}
+    </select></label>
+    <label class="full">Descrição histórica<textarea formControlName="description" maxlength="6000" required></textarea></label>
+    <label>Período<input formControlName="period" maxlength="150"></label>
+    <label>Ano histórico<input type="number" min="1" max="2200" formControlName="year"></label>
+    <label>Local<input formControlName="place" maxlength="180"></label>
+    <label>Fonte<input formControlName="source" maxlength="500" required></label>
+    <label>Latitude<input type="number" min="-90" max="90" step="any" formControlName="latitude"></label>
+    <label>Longitude<input type="number" min="-180" max="180" step="any" formControlName="longitude"></label>
+    <label>Créditos<input formControlName="credits" maxlength="250" required></label>
+    <label>Condições de uso<input formControlName="usage" maxlength="500" required></label>
+    @if (form.invalid && form.touched) {<p class="error full" role="alert">Verifique os campos obrigatórios, o ano e as coordenadas.</p>}
+    @if (error()) {<p class="error full" role="alert">{{error()}}</p>}
+    @if (message()) {<p class="full" role="status">{{message()}}</p>}
+    <div class="actions full"><button class="button" [disabled]="busy()">Salvar alterações</button><a class="button outline" routerLink="/admin/acervo">Voltar ao acervo</a></div>
+  </form>
+}

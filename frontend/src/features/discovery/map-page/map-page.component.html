@@ -1,0 +1,14 @@
+<page-title title="Mapa das Memórias" description="Explore os lugares associados aos registros publicados."/>
+    <section class="wrap section">
+      @if (data.state().phase === 'loading') {<loading-state/>}
+      @else if (data.state().phase === 'error') {<error-state (retry)="data.refresh()"/>}
+      @else {
+        <label>Lugar<select #selector (change)="place.set(selector.value)"><option value="">Todos os lugares</option>
+          @for (name of places(); track name) {<option>{{name}}</option>}</select></label>
+        <memory-map [items]="items()"/>
+        <div class="section archive-grid">
+          @for (item of items(); track item.id) {<archive-card [item]="item"/>}
+          @empty {<empty-state message="Nenhum registro com localização para esta seleção."/>}
+        </div>
+      }
+    </section>

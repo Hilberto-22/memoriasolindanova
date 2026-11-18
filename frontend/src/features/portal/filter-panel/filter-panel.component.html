@@ -1,0 +1,25 @@
+<details class="catalog-filters" [open]="expanded" (toggle)="expanded = $any($event.target).open">
+  <summary><portal-icon name="filter"/> Filtrar resultados</summary>
+  <form class="filter-fields" [formGroup]="form" (ngSubmit)="apply()">
+    <label><span><portal-icon name="layers"/> Coleção</span><select formControlName="collection"><option value="">Todas as coleções</option>@for (item of collections(); track item.slug) {<option [value]="item.slug">{{item.title}}</option>}</select></label>
+    <label><span><portal-icon name="folder"/> Categoria</span><select formControlName="category"><option value="">Todas as categorias</option>@for (item of facets().categories; track item) {<option>{{item}}</option>}</select></label>
+    <fieldset><legend><portal-icon name="calendar"/> Período</legend>
+      <div class="filter-period"><label>De<input inputmode="numeric" pattern="[0-9]{1,4}" formControlName="from"></label>
+        <label>Até<input inputmode="numeric" pattern="[0-9]{1,4}" formControlName="to"></label></div>
+      @if (invalidPeriod()) {<p class="error" role="alert">O ano inicial deve ser anterior ou igual ao final.</p>}
+      @if ((form.controls.from.invalid && form.controls.from.touched) || (form.controls.to.invalid && form.controls.to.touched)) {
+        <p class="error" role="alert">Informe um ano com até quatro dígitos.</p>
+      }
+    </fieldset>
+    <fieldset><legend><portal-icon name="document"/> Tipo de material</legend>
+      @for (item of types; track item.type) {
+        @if (countsByType().has(item.type) || selected().includes(item.type)) {
+          <label class="checkbox"><input type="checkbox" [checked]="selected().includes(item.type)" (change)="toggle(item.type,$any($event.target).checked)"> {{item.type}} ({{countsByType().get(item.type) ?? 0}})</label>
+        }
+      } @if (!counts().length && !selected().length) {<small class="muted">Os tipos aparecem após a publicação dos registros.</small>}
+    </fieldset>
+    <label><span><portal-icon name="pin"/> Local</span><select formControlName="place"><option value="">Todos os locais</option>@for (item of facets().places; track item) {<option>{{item}}</option>}</select></label>
+    <button class="button" type="submit" [disabled]="form.invalid"><portal-icon name="filter"/> Aplicar filtros</button>
+    <button class="button outline" type="button" (click)="clear()">Limpar filtros</button>
+  </form>
+</details>

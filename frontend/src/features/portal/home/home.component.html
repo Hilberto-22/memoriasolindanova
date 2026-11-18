@@ -1,0 +1,184 @@
+@if (editorial.state().data; as view) {
+  <section class="home-hero">
+    <div class="wrap home-hero-grid">
+      <div class="home-hero-copy">
+        <h1>{{ view.content.heroTitle }}</h1>
+        <div class="gold-rule" aria-hidden="true"></div>
+        <p>{{ view.content.heroDescription }}</p>
+        <div class="actions">
+          <a class="button secondary" routerLink="/historia-da-cidade"
+            ><portal-icon name="book" /> Conhecer nossa história</a
+          >
+          <a class="button ghost" routerLink="/contribuir"
+            ><portal-icon name="upload" /> Compartilhar uma memória</a
+          >
+        </div>
+      </div>
+      @if (view.feature?.imageUrl; as photo) {
+        <figure class="archive-print">
+          <a [routerLink]="['/acervo', view.feature?.id]"
+            ><img
+              [src]="photo"
+              [alt]="view.feature?.title || ''"
+              fetchpriority="high"
+          /></a>
+          <figcaption>{{ view.feature?.title }}</figcaption>
+        </figure>
+      } @else {
+        <figure class="archive-print">
+          <img
+            src="imagens/capa.jpeg"
+            alt="Rua de Olinda Nova do Maranhão, com casas e moradores"
+            fetchpriority="high"
+          />
+          <figcaption>Olinda Nova do Maranhão</figcaption>
+        </figure>
+      }
+    </div>
+  </section>
+} @else {
+  <div class="wrap section">
+    @if (editorial.state().phase === "error") {
+      <error-state (retry)="editorial.refresh()" />
+    } @else {
+      <loading-state />
+    }
+  </div>
+}
+<section class="wrap home-section" aria-labelledby="collections-title">
+  <div class="section-title">
+    <div class="heading-with-icon">
+      <portal-icon name="layers" />
+      <div>
+        <h2 id="collections-title">Explore nossas coleções</h2>
+        <p>Navegue pelos temas que reúnem as memórias da cidade.</p>
+      </div>
+    </div>
+    <a routerLink="/colecoes">Ver todas as coleções →</a>
+  </div>
+  @if (collections.state().phase === "loading") {
+    <loading-state />
+  } @else if (collections.state().phase === "error") {
+    <error-state (retry)="collections.refresh()" />
+  } @else {
+    <div class="collection-grid">
+      @for (item of collections.state().data; track item.slug) {
+        <collection-card [item]="item" />
+      }
+    </div>
+  }
+</section>
+<section class="wrap home-panels" aria-label="Outras formas de explorar">
+  <article class="home-panel">
+    <div class="heading-with-icon">
+      <portal-icon name="clock" />
+      <div>
+        <h2>Registros recentes</h2>
+        <p>Últimas memórias adicionadas ao acervo.</p>
+      </div>
+    </div>
+    @if (recent.state().phase === "loading") {
+      <loading-state />
+    } @else if (recent.state().phase === "error") {
+      <error-state (retry)="recent.refresh()" />
+    } @else {
+      <ul class="recent-list">
+        @for (item of recent.state().data?.items; track item.id) {
+          <li>
+            <a [routerLink]="['/acervo', item.id]">
+              @if (item.imageUrl) {
+                <img [src]="item.imageUrl" alt="" loading="lazy" />
+              } @else {
+                <span class="recent-icon"
+                  ><portal-icon [name]="materialIcon(item.type)"
+                /></span>
+              }
+              <span
+                ><strong>{{ item.title }}</strong
+                ><small
+                  >{{ item.type }}
+                  @if (item.period || item.year) {
+                    · {{ item.period || item.year }}
+                  }
+                </small></span
+              >
+              <span aria-hidden="true">›</span>
+            </a>
+          </li>
+        } @empty {
+          <li><empty-state message="Ainda não há registros publicados." /></li>
+        }
+      </ul>
+    }
+    <a class="panel-link" routerLink="/acervo">Ver todos os registros →</a>
+  </article>
+  <article class="home-panel">
+    <div class="heading-with-icon">
+      <portal-icon name="pin" />
+      <div>
+        <h2>Mapa das memórias</h2>
+        <p>
+          Explore os lugares que guardam histórias de Olinda Nova do Maranhão.
+        </p>
+      </div>
+    </div>
+    <div class="home-map">
+      @if (places.state().phase === "error") {
+        <error-state (retry)="places.refresh()" />
+      } @else if (places.state().phase === "loading") {
+        <loading-state />
+      } @else {
+        @defer (on viewport) {
+          <memory-map [items]="places.state().data ?? []" [preview]="true" />
+        } @placeholder {
+          <div class="map map-preview" aria-hidden="true"></div>
+        }
+      }
+      <a class="button" routerLink="/mapa">Explorar no mapa →</a>
+    </div>
+  </article>
+  <article class="home-panel">
+    <div class="heading-with-icon">
+      <portal-icon name="calendar" />
+      <div>
+        <h2>Linha do tempo - História</h2>
+        <p>Acompanhe os marcos históricos do acervo.</p>
+      </div>
+    </div>
+    @if (dates.state().phase === "error") {
+      <error-state (retry)="dates.refresh()" />
+    } @else if (dates.state().phase === "loading") {
+      <loading-state />
+    } @else if (dates.state().data?.length) {
+      <ol class="home-timeline">
+        @for (item of dates.state().data?.slice(0, 3); track item.id) {
+          <li>
+            <span class="timeline-medallion"
+              ><portal-icon [name]="materialIcon(item.type)"
+            /></span>
+            <a [routerLink]="['/acervo', item.id]"
+              ><span class="date">{{ item.period || item.year }}</span
+              ><br />{{ item.title }}</a
+            >
+          </li>
+        }
+      </ol>
+    } @else {
+      <p class="panel-empty">
+        Os marcos aparecem aqui quando a equipe publica registros datados.
+      </p>
+    }
+    <a class="button" routerLink="/linha-do-tempo">Acessar linha do tempo →</a>
+  </article>
+</section>
+@if (editorial.state().data?.content; as content) {
+  <section class="community">
+    <div class="wrap community-grid">
+      <h2>{{ content.communityTitle }}</h2>
+      <p>{{ content.communityDescription }}</p>
+      <a class="button secondary" routerLink="/contribuir"
+        ><portal-icon name="upload" /> Contribuir com uma memória</a
+      >
+    </div>
+  </section>
+}

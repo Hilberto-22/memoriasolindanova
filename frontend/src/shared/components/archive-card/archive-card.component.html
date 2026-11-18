@@ -1,0 +1,15 @@
+<article class="archive-tile">
+  <a class="archive-tile-link" [routerLink]="['/acervo',item().id]">
+    <div class="archive-cover">
+      @if (item().imageUrl) {<img loading="lazy" [src]="item().imageUrl" alt="">}
+      @else {<span class="archive-cover-icon"><portal-icon [name]="materialIcon(item().type)"/></span>}
+      <span class="material-badge"><portal-icon [name]="materialIcon(item().type)"/> {{item().type}}</span>
+    </div>
+    <div class="archive-copy"><h3>{{item().title}}</h3>
+      <span><portal-icon name="calendar"/> {{item().period || item().year || 'Data desconhecida'}}</span>
+      <span><portal-icon name="layers"/> {{item().collection}}</span>
+    </div>
+  </a>
+  <button type="button" class="favorite-button" [attr.aria-pressed]="favorites.ids().includes(item().id)"
+    [attr.aria-label]="'Favorito: ' + item().title" (click)="favorites.toggle(item().id)"><portal-icon name="heart"/></button>
+</article>

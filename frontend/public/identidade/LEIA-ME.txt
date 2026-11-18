@@ -1,0 +1,6 @@
+Adicione os três arquivos originais, sem modificar suas imagens:
+logo_centro_educa_mais.jpeg
+logo_maranhao.jpeg (nome local ASCII para o original logo_maranhão.jpeg)
+ure_viana.jpeg
+
+O banner usa a fotografia original em public/imagens/capa.jpeg como capa padrão. Para substituir a capa, publique um registro com fotografia autorizada e selecione o registro em Administração → Configurações.

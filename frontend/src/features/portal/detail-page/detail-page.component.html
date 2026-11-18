@@ -1,0 +1,31 @@
+@if (result(); as response) {
+    @if (response.phase === 'loading') {<div class="wrap section"><loading-state/></div>}
+    @else if (response.phase === 'error') {<div class="wrap section"><error-state message="Não foi possível localizar ou carregar este registro." (retry)="reload.update(increment)"/></div>}
+    @else if (response.data; as item) {
+      <page-title [title]="item.title" [description]="item.type"/>
+      <div class="wrap section preview-grid">
+        <div>
+          @if (item.imageUrl) {<img class="card" [src]="item.imageUrl" [alt]="item.title">}
+          @if (item.files?.length) {
+            <section class="section"><h2>Galeria de arquivos</h2><ul>
+              @for (file of item.files; track file.id) {<li><a [href]="file.url" target="_blank" rel="noopener">{{file.name}}</a></li>}
+            </ul></section>
+          }
+        </div>
+        <div class="card card-body">
+          <h2>Descrição histórica</h2><p>{{item.description}}</p>
+          <dl class="metadata">
+            <dt>Data ou período</dt><dd>{{item.period || item.year || 'Não informado'}}</dd>
+            <dt>Local</dt><dd>{{item.place || 'Não informado'}}</dd>
+            <dt>Coleção</dt><dd><a routerLink="/acervo" [queryParams]="{collection:item.collectionSlug}">{{item.collection}}</a></dd>
+            <dt>Fontes</dt><dd>{{item.source || 'Não informado'}}</dd>
+            <dt>Créditos</dt><dd>{{item.credits || 'Não informado'}}</dd>
+            <dt>Condições de uso</dt><dd>{{item.usage || 'Consultar a equipe do acervo'}}</dd>
+          </dl>
+          <div class="actions"><button class="button" type="button" (click)="share(item)">Compartilhar</button>
+            <a class="button outline" routerLink="/contribuir" [queryParams]="{registro:item.id}">Enviar informação complementar</a></div>
+          @if (shareState()) {<p role="status">{{shareState()}}</p>}
+        </div>
+      </div>
+    }
+  }

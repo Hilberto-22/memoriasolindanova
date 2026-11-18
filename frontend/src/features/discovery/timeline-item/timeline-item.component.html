@@ -1,0 +1,5 @@
+<article class="card card-body">
+    @if (item().imageUrl) {<img class="cover" loading="lazy" [src]="item().imageUrl" alt="">}
+    <p class="date">{{item().period || item().year}}</p>
+    <h3><a [routerLink]="['/acervo',item().id]">{{item().title}}</a></h3><p>{{item().place}}</p>
+  </article>

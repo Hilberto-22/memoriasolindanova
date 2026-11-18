@@ -1,0 +1,38 @@
+<page-title [title]="admin ? 'Cadastrar registro' : 'Compartilhe uma memória'" [description]="admin ? 'Cadastre o material e conclua a revisão para publicá-lo no acervo.' : 'Envie fotografias, documentos ou relatos para avaliação da equipe do acervo.'"/>
+  <section class="wrap section">
+    @if (receipt()) {
+      <div class="state" role="status">
+        @if (admin) {
+          <h2>Registro salvo para revisão</h2><p>Protocolo {{receipt()}}.</p>
+          <a class="button" routerLink="/admin/contribuicoes" [queryParams]="{registro:receipt()}">Revisar e publicar</a>
+        } @else {
+          <h2>Contribuição recebida</h2><p>Protocolo {{receipt()}}. A equipe do acervo avaliará o material antes da publicação.</p>
+          <a class="button" routerLink="/acervo">Explorar o acervo</a>
+        }
+      </div>
+    } @else {
+      <form class="card card-body form-grid" [formGroup]="form" (ngSubmit)="submit()">
+        <p class="full" aria-live="polite">{{completed()}} de 8 itens obrigatórios preenchidos.</p>
+        @if (related) {<p class="full">Informação complementar ao registro <a [routerLink]="['/acervo', related]">{{related}}</a>.</p>}
+        <label>Nome <input formControlName="name" autocomplete="name" maxlength="150" required></label>
+        <label>E-mail <input formControlName="email" type="email" autocomplete="email" maxlength="254" required></label>
+        <label>Tipo de material <select formControlName="type" required><option value="">Selecione</option>@for (type of types; track type) {<option>{{type}}</option>}</select></label>
+        <label>Coleção <select formControlName="collection" required><option value="">Selecione</option>@for (item of collections.state().data; track item.slug) {<option [value]="item.slug">{{item.title}}</option>}</select></label>
+        @if (collections.state().phase === 'error') {<error-state class="full" message="Não foi possível carregar as coleções." (retry)="collections.refresh()"/>}
+        <label class="full">Título <input formControlName="title" maxlength="180" required></label>
+        <label class="full">Descrição <textarea formControlName="description" maxlength="6000" required></textarea></label>
+        <label>Data aproximada <input formControlName="period" maxlength="150"></label>
+        <label>Local <input formControlName="place" maxlength="180"></label>
+        <label class="full">Origem do material <input formControlName="source" maxlength="500" required></label>
+        <file-uploader class="full" (changed)="files.set($event)"/>
+        <label class="checkbox full"><input type="checkbox" formControlName="consent" required>
+          Autorizo o envio e a publicação do material e confirmo que tenho autorização para compartilhá-lo.
+        </label>
+        @if (error()) {<p class="error full" role="alert">{{error()}}</p>}
+        @if (sending()) {
+          <label class="full">Enviando contribuição <progress max="100" [attr.value]="progress()"></progress></label>
+        }
+        <div class="actions full"><button type="submit" class="button" [disabled]="sending()">{{admin ? 'Salvar para revisão' : 'Enviar contribuição'}}</button></div>
+      </form>
+    }
+  </section>

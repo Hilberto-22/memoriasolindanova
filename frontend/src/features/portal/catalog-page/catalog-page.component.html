@@ -1,0 +1,144 @@
+<section class="catalog-hero">
+  @if (editorial.state().data?.feature?.imageUrl; as image) {
+    <img class="catalog-hero-image" [src]="image" alt="" />
+  }
+  <div class="wrap catalog-hero-copy">
+    <h1>Explore o acervo</h1>
+    <p>
+      Fotografias, documentos, entrevistas, áudios e vídeos que contam a
+      história de Olinda Nova do Maranhão.
+    </p>
+    <div id="busca">
+      <search-bar
+        [value]="query().q"
+        label="Pesquise por pessoas, eventos, lugares, documentos…"
+        (searched)="navigate({ q: $event, page: 0 })"
+      />
+    </div>
+  </div>
+</section>
+<div class="wrap catalog catalog-layout">
+  <filter-panel
+    [values]="filters()"
+    [collections]="collections.state().data ?? []"
+    [facets]="facets.state().data ?? emptyFacets"
+    [counts]="counts.state().data ?? []"
+    (changed)="applyFilters($event)"
+  />
+  <section aria-label="Resultados do acervo" class="catalog-results">
+    @if (counts.state().phase === "loading") {
+      <loading-state />
+    } @else if (counts.state().phase === "error") {
+      <error-state
+        message="Contadores indisponíveis."
+        (retry)="counts.refresh()"
+      />
+    } @else {
+      <div class="catalog-counts">
+        @for (item of cards(); track item.type) {
+          <button
+            type="button"
+            class="material-count"
+            [attr.aria-pressed]="query().type === item.type"
+            (click)="
+              navigate({
+                type: query().type === item.type ? '' : item.type,
+                page: 0,
+              })
+            "
+          >
+            <span class="count-icon"><portal-icon [name]="item.icon" /></span>
+            <span
+              >{{ item.label }}<strong>{{ item.count }}</strong></span
+            >
+          </button>
+        }
+      </div>
+    }
+    <div class="catalog-toolbar">
+      <div>
+        <h2>Resultados</h2>
+        @if (result()?.data; as page) {
+          <span aria-live="polite"
+            >({{ page.total }} {{ page.total === 1 ? "item" : "itens" }})</span
+          >
+        }
+      </div>
+      <div class="actions">
+        <label class="sort-label"
+          >Ordenar por<select
+            [value]="query().sort"
+            (change)="navigate({ sort: sorter.value, page: 0 })"
+            #sorter
+          >
+            <option value="recent">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+            <option value="title">Título (A–Z)</option>
+          </select></label
+        >
+        <div
+          class="view-toggle"
+          role="group"
+          aria-label="Visualização dos resultados"
+        >
+          <button
+            type="button"
+            aria-label="Grade"
+            [attr.aria-pressed]="!list()"
+            (click)="list.set(false)"
+          >
+            <portal-icon name="grid" />
+          </button>
+          <button
+            type="button"
+            aria-label="Lista"
+            [attr.aria-pressed]="list()"
+            (click)="list.set(true)"
+          >
+            <portal-icon name="list" />
+          </button>
+        </div>
+      </div>
+    </div>
+    @if (result(); as response) {
+      @if (response.phase === "loading") {
+        <loading-state />
+      } @else if (response.phase === "error") {
+        <error-state (retry)="reload.update(increment)" />
+      } @else if (response.data; as page) {
+        @if (page.items.length) {
+          <div class="catalog-records" [class.record-list]="list()">
+            @for (item of page.items; track item.id) {
+              <archive-card [item]="item" />
+            }
+          </div>
+        } @else {
+          <empty-state />
+        }
+        <app-pagination
+          [page]="page.page"
+          [total]="pages(page.total, page.size)"
+          (changed)="navigate({ page: $event })"
+        />
+      }
+    }
+    @if (editorial.state().data?.feature; as feature) {
+      <article class="catalog-feature">
+        @if (feature.imageUrl) {
+          <img [src]="feature.imageUrl" [alt]="feature.title" loading="lazy" />
+        }
+        <div>
+          <div class="heading-with-icon">
+            <portal-icon name="photo" />
+            <h2>Uma fotografia, uma história</h2>
+          </div>
+          <h3>{{ feature.title }}</h3>
+          <p>{{ feature.description }}</p>
+          <a class="button secondary" [routerLink]="['/acervo', feature.id]"
+            ><portal-icon name="book" /> Conheça essa história</a
+          >
+        </div>
+      </article>
+    }
+  </section>
+</div>

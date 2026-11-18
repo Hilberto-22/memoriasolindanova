@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: ${DOCKER_LIBRARY_REGISTRY:-docker.io/library}/postgres:16-alpine
+    environment:
+      POSTGRES_DB: memorias
+      POSTGRES_USER: memorias
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Defina DATABASE_PASSWORD no arquivo .env}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memorias -d memorias"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  minio:
+    build:
+      context: ./infra/minio
+      target: minio
+      args:
+        DOCKER_LIBRARY_REGISTRY: ${DOCKER_LIBRARY_REGISTRY:-docker.io/library}
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?Defina S3_ACCESS_KEY no arquivo .env}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?Defina S3_SECRET_KEY no arquivo .env}
+    volumes:
+      - objects:/data
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+  create-bucket:
+    build:
+      context: ./infra/minio
+      target: mc
+      args:
+        DOCKER_LIBRARY_REGISTRY: ${DOCKER_LIBRARY_REGISTRY:-docker.io/library}
+    depends_on:
+      - minio
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?Defina S3_ACCESS_KEY no arquivo .env}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?Defina S3_SECRET_KEY no arquivo .env}
+      S3_BUCKET: ${S3_BUCKET:-memorias}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        for attempt in $$(seq 1 30); do
+          if mc alias set storage http://minio:9000 "$$S3_ACCESS_KEY" "$$S3_SECRET_KEY" &&
+             mc mb --ignore-existing "storage/$$S3_BUCKET"; then exit 0; fi
+          sleep 2
+        done
+        exit 1
+  api:
+    build:
+      context: ./backend
+      args:
+        DOCKER_LIBRARY_REGISTRY: ${DOCKER_LIBRARY_REGISTRY:-docker.io/library}
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/memorias
+      DATABASE_USER: memorias
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-memorias}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no arquivo .env}
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      create-bucket:
+        condition: service_completed_successfully
+  portal:
+    build:
+      context: ./frontend
+      args:
+        DOCKER_LIBRARY_REGISTRY: ${DOCKER_LIBRARY_REGISTRY:-docker.io/library}
+    ports:
+      - "127.0.0.1:${PORTAL_PORT:-8088}:80"
+    depends_on:
+      - api
+volumes:
+  database:
+  objects:

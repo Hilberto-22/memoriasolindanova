@@ -1,0 +1,52 @@
+<div class="login-shell">
+  <header class="login-header">
+    <portal-brand/>
+    <a class="login-back" routerLink="/">← Voltar ao portal</a>
+  </header>
+  <main id="conteudo" tabindex="-1" class="login-main">
+    <section class="login-intro" aria-labelledby="welcome-title">
+      <span class="login-eyebrow">Maranhão de Memórias · Administração</span>
+      <h2 id="welcome-title">Cuidar do acervo é preservar nossa história.</h2>
+      <p>Um espaço para organizar, valorizar e compartilhar as memórias de Olinda Nova do Maranhão.</p>
+      <ul class="login-features">
+        <li><portal-icon name="layers"/><span>Cadastre e organize os registros do acervo.</span></li>
+        <li><portal-icon name="upload"/><span>Revise as memórias enviadas pela comunidade.</span></li>
+        <li><portal-icon name="settings"/><span>Atualize as coleções e as informações do portal.</span></li>
+      </ul>
+      <span class="login-location">Olinda Nova do Maranhão · Memória e pertencimento</span>
+    </section>
+    <section class="login-panel" aria-labelledby="login-title">
+      <span class="login-badge"><portal-icon name="lock"/> Acesso restrito</span>
+      <h1 id="login-title">Acesso administrativo</h1>
+      <p class="login-description" id="login-description">Entre com a conta do administrador para gerenciar o portal.</p>
+      @if (expired) {<p class="login-notice" role="status">Sua sessão expirou ou foi encerrada. Entre novamente para continuar.</p>}
+      <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" aria-describedby="login-description" [attr.aria-busy]="busy()" novalidate>
+        <div class="login-field">
+          <label for="admin-username">Usuário</label>
+          <input #usernameInput id="admin-username" formControlName="username" autocomplete="username" autocapitalize="none" spellcheck="false"
+            placeholder="Seu usuário de acesso" required [readOnly]="busy()"
+            [attr.aria-invalid]="form.controls.username.touched && form.controls.username.invalid"
+            [attr.aria-describedby]="form.controls.username.touched && form.controls.username.invalid ? 'username-error' : null">
+          @if (form.controls.username.touched && form.controls.username.invalid) {<small class="error" id="username-error">Informe o usuário.</small>}
+        </div>
+        <div class="login-field">
+          <label for="admin-password">Senha</label>
+          <div class="login-password">
+            <input #passwordInput id="admin-password" formControlName="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="current-password"
+              placeholder="Sua senha" required [readOnly]="busy()" (keydown)="capsLock.set($event.getModifierState('CapsLock'))" (keyup)="capsLock.set($event.getModifierState('CapsLock'))" (blur)="capsLock.set(false)"
+              [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+              [attr.aria-describedby]="form.controls.password.touched && form.controls.password.invalid ? 'password-error' : null">
+            <button type="button" class="login-reveal" (click)="showPassword.set(!showPassword())" [attr.aria-pressed]="showPassword()" aria-controls="admin-password" [disabled]="busy()">{{showPassword() ? 'Ocultar' : 'Mostrar'}}<span class="login-sr-only"> senha</span></button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {<small class="error" id="password-error">Informe a senha.</small>}
+          @if (capsLock()) {<small class="login-caps" role="status">A tecla Caps Lock está ativada.</small>}
+        </div>
+        @if (error()) {<p class="login-error" role="alert">{{error()}}</p>}
+        <button class="button login-submit" type="submit" [disabled]="busy()">{{busy() ? 'Entrando…' : 'Entrar no painel'}} <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="login-help">Precisa recuperar o acesso? Solicite a redefinição das credenciais ao responsável técnico pela plataforma.</p>
+      <div class="login-public"><p>Quer compartilhar uma memória?</p><a routerLink="/contribuir">Envie sua contribuição pelo portal →</a></div>
+    </section>
+  </main>
+  <footer class="login-footer">Maranhão de Memórias · Acervo Digital de Olinda Nova do Maranhão</footer>
+</div>

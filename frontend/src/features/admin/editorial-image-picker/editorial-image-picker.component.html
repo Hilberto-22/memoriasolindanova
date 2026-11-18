@@ -1,0 +1,51 @@
+<fieldset class="editorial-image-picker" [disabled]="disabled()">
+  <legend>{{label()}}</legend>
+  @if (current()?.data; as item) {
+    <div class="editorial-image-preview">
+      @if (item.imageUrl) {<img [src]="item.imageUrl" alt="" loading="lazy">}
+      <span>{{item.title}}</span>
+    </div>
+  } @else if (current()?.phase === 'loading') {
+    <loading-state/>
+  } @else if (selected() !== null) {
+    <p>Registro {{selected()}} selecionado.</p>
+  } @else {
+    <p>Nenhum registro selecionado.</p>
+  }
+  <div class="actions">
+    <button #toggle type="button" class="button outline" [attr.aria-expanded]="expanded()" (click)="expanded.set(!expanded())">
+      {{expanded() ? 'Fechar busca' : 'Escolher registro'}}
+    </button>
+    @if (selected() !== null) {
+      <button type="button" class="button outline" (click)="selectedChange.emit(null)">Remover seleção</button>
+    }
+  </div>
+  @if (expanded()) {
+    <label>{{imagesOnly() ? 'Buscar registro publicado com imagem' : 'Buscar registro publicado'}}
+      <input #term type="search" [value]="search().q" (keydown.enter)="$event.preventDefault(); lookup(term.value)">
+    </label>
+    <button type="button" class="button" (click)="lookup(term.value)">Buscar</button>
+    @if (results()?.phase === 'loading') {<loading-state/>}
+    @else if (results()?.phase === 'error') {<p class="error" role="alert">Não foi possível carregar os registros. Tente buscar novamente.</p>}
+    @else if (results()?.data; as page) {
+      <ul class="management-list">
+        @for (item of page.items; track item.id) {
+          <li>
+            <span class="editorial-image-preview">
+              @if (item.imageUrl) {<img [src]="item.imageUrl" alt="" loading="lazy">}
+              <span>{{item.title}} <small class="muted">· {{item.collection}}</small></span>
+            </span>
+            <button type="button" class="button outline" [attr.aria-label]="'Selecionar ' + item.title"
+              [disabled]="item.id === selected()" (click)="choose(item.id); toggle.focus()">
+              {{item.id === selected() ? 'Selecionado' : 'Selecionar'}}
+            </button>
+          </li>
+        } @empty {
+          <li>{{imagesOnly() ? 'Nenhum registro publicado com imagem corresponde à busca.' : 'Nenhum registro publicado corresponde à busca.'}}</li>
+        }
+      </ul>
+      <app-pagination [page]="page.page" [total]="pages(page.total, page.size)"
+        (changed)="lookup(search().q, $event)"/>
+    }
+  }
+</fieldset>

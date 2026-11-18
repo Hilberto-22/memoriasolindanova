@@ -1,0 +1,16 @@
+<page-title [title]="page['heading']"/>
+<section class="wrap section">
+  @if (page['section'] && editorial.state().phase === 'loading') {<loading-state/>}
+  @else if (page['section'] && editorial.state().phase === 'error') {<error-state (retry)="editorial.refresh()"/>}
+  @else {
+    <div class="card card-body">
+      @if (description(); as content) {<p class="editorial-text">{{content}}</p>}
+      @else if (page['section'] === 'contact') {
+        @if (editorial.state().data?.content?.contactEmail; as email) {<p><a [href]="'mailto:' + email">{{email}}</a></p>}
+        @else {<empty-state message="O endereço de contato ainda não foi cadastrado."/>}
+      } @else if (page['section']) {<empty-state message="Este conteúdo ainda não foi cadastrado."/>}
+      @else {<p>O endereço solicitado está indisponível.</p>}
+      <a class="button" [routerLink]="page['link']">{{page['action']}}</a>
+    </div>
+  }
+</section>

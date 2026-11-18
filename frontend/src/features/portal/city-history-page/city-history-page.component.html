@@ -1,0 +1,63 @@
+<page-title title="História da cidade" description="Conheça a história, as tradições, a bandeira, o hino e outros patrimônios de Olinda Nova do Maranhão." />
+<section class="wrap section">
+  <div class="section-title">
+    <p>Um espaço aberto a todos para conhecer a memória e a identidade da nossa cidade.</p>
+    <a routerLink="/linha-do-tempo">Explorar a linha do tempo do acervo →</a>
+  </div>
+  @if (data.state().phase === 'loading') { <loading-state /> }
+  @else if (data.state().phase === 'error') { <error-state (retry)="data.refresh()" /> }
+  @else {
+    <div class="history-controls" aria-label="Filtros e ordenação da história da cidade">
+      <label>Tema
+        <select #themeSelect [value]="theme()" (change)="theme.set(themeSelect.value)">
+          <option value="">Todos os temas</option>
+          @for (item of themes; track item.value) { <option [value]="item.value">{{item.label}}</option> }
+        </select>
+      </label>
+      <label>Período
+        <select #periodSelect [value]="period()" (change)="period.set(periodSelect.value)">
+          <option value="">Todos os períodos</option>
+          @for (item of periods(); track item) { <option [value]="item">{{item}}</option> }
+        </select>
+      </label>
+      <label>Organizar por
+        <select #groupSelect [value]="grouping()" (change)="grouping.set(groupSelect.value)">
+          <option value="date">Datas</option><option value="period">Períodos</option>
+        </select>
+      </label>
+      <label>Ordenação
+        <select #orderSelect [value]="direction()" (change)="direction.set(orderSelect.value)">
+          <option value="oldest">Mais antigos primeiro</option><option value="newest">Mais recentes primeiro</option>
+        </select>
+      </label>
+      <button class="button outline" type="button" (click)="reset()">Limpar filtros</button>
+    </div>
+    <p class="muted">Os períodos são ordenados pela data inicial de referência. Informações sem data aparecem ao final.</p>
+    <p role="status">{{items().length}} {{items().length === 1 ? 'informação encontrada' : 'informações encontradas'}}.</p>
+    @for (group of groups(); track group.label) {
+      <section class="history-group" [attr.aria-label]="group.label || 'Informações da cidade'">
+        @if (group.label) { <h2>{{group.label}}</h2> }
+        @for (item of group.items; track item.id) {
+          <article class="card card-body history-article" [id]="'informacao-' + item.id">
+            <header>
+              <p class="date">{{themeLabel(item.category)}} · {{periodLabel(item)}}</p>
+              @if (group.label) { <h3>{{item.title}}</h3> } @else { <h2>{{item.title}}</h2> }
+              @if (item.startDate) {
+                <p class="muted">Data de referência: {{item.startDate | date:'dd/MM/yyyy'}}@if (item.endDate) { a {{item.endDate | date:'dd/MM/yyyy'}} }</p>
+              }
+            </header>
+            @if (item.imageUrl) { <img class="history-image" [src]="item.imageUrl" [alt]="item.memoryTitle || item.title" loading="lazy"> }
+            <div class="editorial-text">{{item.content}}</div>
+            @if (item.source) { <p class="history-source"><strong>Fontes e referências:</strong> {{item.source}}</p> }
+            @if (item.memoryId) {
+              <p><a [routerLink]="['/acervo', item.memoryId]">Consultar {{item.memoryTitle}} no acervo (imagens, áudios e documentos) →</a></p>
+            }
+          </article>
+        }
+      </section>
+    }
+    @if (!items().length) {
+      <empty-state [message]="theme() || period() ? 'Nenhuma informação corresponde aos filtros selecionados.' : 'As informações sobre a cidade serão exibidas aqui assim que a equipe publicar os primeiros conteúdos.'" />
+    }
+  }
+</section>
