@@ -86,6 +86,17 @@ export interface Facets {
   categories: string[];
   places: string[];
 }
+export interface RecordOptions {
+  places: string[];
+  sources: string[];
+}
+export interface RecordOptionInput {
+  kind: 'PLACE' | 'SOURCE';
+  value: string;
+}
+export interface RecordOption extends RecordOptionInput {
+  id: number;
+}
 export interface Contribution {
   id: number;
   name: string;
@@ -122,6 +133,21 @@ export class Api {
   }
   facets() {
     return this.http.get<Facets>("/api/facets");
+  }
+  recordOptions() {
+    return this.http.get<RecordOptions>("/api/admin/record-options");
+  }
+  recordOptionEntries() {
+    return this.http.get<RecordOption[]>("/api/admin/record-options/entries");
+  }
+  saveRecordOption(payload: RecordOptionInput, id: number | null) {
+    const url = "/api/admin/record-options/entries";
+    return this.csrf().pipe(switchMap(() => id === null
+      ? this.http.post<{id:number}>(url, payload)
+      : this.http.put<void>(url + "/" + id, payload)));
+  }
+  deleteRecordOption(id: number) {
+    return this.csrf().pipe(switchMap(() => this.http.delete<void>("/api/admin/record-options/entries/" + id)));
   }
   materialCounts() {
     return this.http.get<Count[]>("/api/material-counts");

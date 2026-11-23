@@ -27,11 +27,18 @@ class ContributionController {
         this.moderation = moderation;
     }
 
-    @PostMapping(path = {"/contributions", "/admin/drafts"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/contributions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     Map<String, Long> submit(@RequestPart("memory") Submission submission,
                              @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         return Map.of("id", intake.submit(submission, files == null ? List.of() : files));
+    }
+
+    @PostMapping(path = "/admin/drafts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    Map<String, Long> draft(@RequestPart("memory") Submission submission,
+                            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return Map.of("id", intake.submitDraft(submission, files == null ? List.of() : files));
     }
 
     @GetMapping("/admin/contributions")

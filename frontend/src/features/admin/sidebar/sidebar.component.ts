@@ -14,6 +14,7 @@ export class Sidebar {
     {path:'/admin',label:'Dashboard',icon:'home'}, {path:'/admin/acervo',label:'Acervo',icon:'layers'},
     {path:'/admin/contribuicoes',label:'Contribuições',icon:'upload'}, {path:'/admin/conta',label:'Conta administrativa',icon:'lock'},
     {path:'/admin/colecoes',label:'Coleções',icon:'folder'}, {path:'/admin/mapa',label:'Mapa',icon:'pin'},
+    {path:'/admin/locais-e-origens',label:'Locais e origens',icon:'list'},
     {path:'/admin/linha-do-tempo',label:'Linha do tempo',icon:'calendar'}, {path:'/admin/relatorios',label:'Relatórios',icon:'chart'},
     {path:'/admin/configuracoes',label:'Configurações',icon:'settings'}
   ];

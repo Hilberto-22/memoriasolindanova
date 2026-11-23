@@ -1,0 +1,39 @@
+<h1>Locais e origens</h1>
+<p>Cadastre as opções de Local e Origem do material para facilitar o preenchimento dos registros. Alterar ou remover uma opção da lista mantém os dados dos registros já salvos.</p>
+@if (message()) {<p role="status">{{message()}}</p>}
+@if (error()) {<p class="error" role="alert">{{error()}}</p>}
+<div class="management-grid">
+  <section class="card card-body">
+    <h2>Opções cadastradas</h2>
+    @if (data.state().phase === 'loading') {<loading-state/>}
+    @else if (data.state().phase === 'error') {<error-state (retry)="data.refresh()"/>}
+    @else {
+      @for (group of groups; track group.kind) {
+        <h3>{{group.label}}</h3>
+        <ul class="management-list">
+          @for (item of entries(group.kind); track item.id) {
+            <li><span class="option-name">{{item.value}}</span>
+              <button class="button outline" type="button" (click)="select(item)" [disabled]="busy()" [attr.aria-label]="'Editar ' + item.value">Editar</button>
+            </li>
+          }
+        </ul>
+        @if (!entries(group.kind).length) {<empty-state [message]="'Nenhuma opção em ' + group.label + '. Cadastre a primeira no formulário.'"/>}
+      }
+    }
+  </section>
+  <form class="card card-body filter-fields" [formGroup]="form" (ngSubmit)="save()">
+    <h2>{{editing() === null ? 'Nova opção' : 'Editar opção'}}</h2>
+    <label>Lista<select formControlName="kind" required>
+      <option value="PLACE">Local</option><option value="SOURCE">Origem do material</option>
+    </select></label>
+    <label>Nome<input formControlName="value" [maxlength]="form.controls.kind.value === 'PLACE' ? 180 : 500" required></label>
+    @if (form.invalid && form.touched) {<p class="error" role="alert">Preencha o nome com até {{form.controls.kind.value === 'PLACE' ? 180 : 500}} caracteres.</p>}
+    <div class="actions">
+      <button class="button" [disabled]="busy()">{{busy() ? 'Processando…' : 'Salvar opção'}}</button>
+      @if (editing() !== null) {<button class="button outline" type="button" (click)="select()" [disabled]="busy()">Nova opção</button>}
+    </div>
+    @if (editing() !== null && !busy()) {
+      <confirm-dialog title="Remover opção" message="A opção deixará de aparecer nas listas de preenchimento. Os registros já salvos manterão seus dados." action="Remover opção" (confirmed)="remove(editing()!)"/>
+    }
+  </form>
+</div>

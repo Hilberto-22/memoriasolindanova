@@ -16,6 +16,7 @@ export class RecordEditor {
   readonly id = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
   readonly record = resource(() => this.api.memory(String(this.id)));
   readonly collections = resource(() => this.api.collections());
+  readonly options = resource(() => this.api.recordOptions());
   readonly busy = signal(false);
   readonly message = signal('');
   readonly error = signal('');

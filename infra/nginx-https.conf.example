@@ -10,7 +10,7 @@ server {
     ssl_certificate /etc/letsencrypt/live/memoriasolindanova.com.br/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/memoriasolindanova.com.br/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
-    client_max_body_size 105m;
+    client_max_body_size 1505m;
 
     location / {
         proxy_pass http://127.0.0.1:8088;
@@ -20,6 +20,6 @@ server {
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port 443;
         proxy_set_header Forwarded "";
-        proxy_read_timeout 120s;
+        proxy_read_timeout 600s;
     }
 }

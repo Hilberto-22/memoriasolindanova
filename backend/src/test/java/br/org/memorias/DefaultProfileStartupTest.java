@@ -1,6 +1,7 @@
 package br.org.memorias;
 
 import br.org.memorias.storage.FileStorage;
+import jakarta.servlet.MultipartConfigElement;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,13 @@ class DefaultProfileStartupTest {
     }
 
     @Autowired FileStorage storage;
+    @Autowired MultipartConfigElement multipart;
+
+    @Test
+    void multipartAllowsFiveVideosOf300MbWithRoomForFormFields() {
+        assertThat(multipart.getMaxFileSize()).isEqualTo(300L * 1024 * 1024);
+        assertThat(multipart.getMaxRequestSize()).isEqualTo(1505L * 1024 * 1024);
+    }
 
     @Test
     void startsWithoutDevProfileAndStoresFilesLocally() throws Exception {

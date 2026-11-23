@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { of } from 'rxjs';
 import { Api } from '../../../api';
 import { resource } from '../../../data-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state.component';
@@ -21,25 +22,33 @@ export class ContributionPage {
   readonly admin = this.route.snapshot.data['admin'] === true;
   readonly types = materialTypes.map(item => item.type);
   readonly form = this.fb.group({
-    name:['', Validators.required], email:['',[Validators.required,Validators.email]], type:['',Validators.required],
-    title:['',Validators.required], description:['',Validators.required], period:[''], place:[''],
-    collection:['',Validators.required], source:['',Validators.required], consent:[false,Validators.requiredTrue]
+    name:['', this.admin ? [] : Validators.required],
+    email:['', this.admin ? [Validators.email] : [Validators.required,Validators.email]], type:['',Validators.required],
+    title:['',Validators.required], description:['', this.admin ? [] : Validators.required], period:[''], place:[''],
+    collection:['',Validators.required], source:['', this.admin ? [] : Validators.required],
+    consent:[false, this.admin ? [] : Validators.requiredTrue]
   });
   readonly collections = resource(() => this.api.collections());
+  readonly options = resource(() => this.admin ? this.api.recordOptions() : of({places:[], sources:[]}));
+  readonly requiredFields = this.admin
+    ? ['type','collection','title'] as const
+    : ['name','email','type','title','description','collection','source','consent'] as const;
   readonly files = signal<File[]>([]);
   readonly sending = signal(false);
   readonly progress = signal<number | null>(null);
   readonly error = signal('');
   readonly receipt = signal<number | null>(null);
   completed() {
-    return (['name','email','type','title','description','collection','source','consent'] as const)
+    return this.requiredFields
       .filter(field => this.form.controls[field].valid).length;
   }
   submit() {
     if (this.sending()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set('Preencha os campos obrigatórios, informe um e-mail válido e marque a autorização.');
+      this.error.set(this.admin
+        ? 'Preencha Tipo de material, Coleção e Título. Se informar um e-mail, confira se ele é válido.'
+        : 'Preencha os campos obrigatórios, informe um e-mail válido e marque a autorização.');
       return;
     }
     this.error.set('');

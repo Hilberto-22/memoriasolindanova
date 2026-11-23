@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -21,6 +22,7 @@ import java.util.Base64;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SpringBootTest(properties = {
         "memorias.admin-user=admin",
@@ -41,6 +43,7 @@ class PublicationFlowTest {
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
+    @Autowired JdbcClient db;
 
     @Test
     void submissionAndFilesBecomePublicOnlyAfterApproval() throws Exception {
@@ -98,9 +101,85 @@ class PublicationFlowTest {
         mvc.perform(get("/api/timeline")).andExpect(jsonPath("$.length()").value(1));
         mvc.perform(get("/api/collections")).andExpect(jsonPath("$[0].count").value(1));
         verifyEditorialPublishing(session, adminCsrf, submission, review, memoryId);
+        verifyOptionalDraftFields(session, adminCsrf);
         mvc.perform(post("/api/logout").session(session).cookie(adminCsrf)
                 .header("X-XSRF-TOKEN", adminCsrf.getValue())).andExpect(status().isNoContent());
         mvc.perform(get("/api/admin/dashboard")).andExpect(status().isUnauthorized());
+    }
+
+    private void verifyOptionalDraftFields(MockHttpSession session, Cookie csrf) throws Exception {
+        String minimal = """
+                {"type":"Documento","collection":"cidade","title":"Registro mínimo"}
+                """;
+        var memory = new MockMultipartFile("memory", "", "application/json", minimal.getBytes(StandardCharsets.UTF_8));
+        mvc.perform(multipart("/api/admin/drafts").file(memory).cookie(csrf)
+                .header("X-XSRF-TOKEN", csrf.getValue())).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/record-options")).andExpect(status().isUnauthorized());
+        mvc.perform(multipart("/api/contributions").file(memory).cookie(csrf)
+                .header("X-XSRF-TOKEN", csrf.getValue())).andExpect(status().isBadRequest());
+
+        for (String field : new String[] {"type", "collection", "title"}) {
+            var invalid = json.readTree(minimal).deepCopy();
+            ((com.fasterxml.jackson.databind.node.ObjectNode) invalid).put(field, "   ");
+            mvc.perform(multipart("/api/admin/drafts")
+                    .file(new MockMultipartFile("memory", "", "application/json", json.writeValueAsBytes(invalid)))
+                    .session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                    .andExpect(status().isBadRequest());
+        }
+        for (String invalid : new String[] {
+                minimal.replace("Documento", "Inválido"),
+                minimal.replace("cidade", "inexistente"),
+                minimal.replace("\"type\":", "\"email\":\"inválido\",\"type\":"),
+                minimal.replace("\"type\":", "\"source\":\"" + "a".repeat(501) + "\",\"type\":") }) {
+            mvc.perform(multipart("/api/admin/drafts")
+                    .file(new MockMultipartFile("memory", "", "application/json", invalid.getBytes(StandardCharsets.UTF_8)))
+                    .session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                    .andExpect(status().isBadRequest());
+        }
+        var created = mvc.perform(multipart("/api/admin/drafts").file(memory).session(session)
+                        .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isCreated()).andReturn();
+        long id = json.readTree(created.getResponse().getContentAsByteArray()).get("id").asLong();
+        assertFalse(db.sql("select consent from contributions where id=:id").param("id", id).query(Boolean.class).single());
+        mvc.perform(patch("/api/admin/contributions/{id}", id).session(session).cookie(csrf)
+                        .header("X-XSRF-TOKEN", csrf.getValue()).contentType("application/json")
+                        .content("""
+                                {"status":"APPROVED","category":"Documento","credits":"Equipe","usage":"Consulta"}
+                                """))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/memories").param("q", "Registro mínimo"))
+                .andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.items[0].description").value(""))
+                .andExpect(jsonPath("$.items[0].source").value(""))
+                .andExpect(jsonPath("$.items[0].place").value(""))
+                .andExpect(jsonPath("$.items[0].files.length()").value(0));
+
+        String suggested = """
+                {"type":"Fotografia","collection":"cidade","title":"Com sugestões",
+                 "place":" Praça da Matriz ","source":" Acervo da família ",
+                 "name":null,"email":"","description":null,"consent":false}
+                """;
+        // Free-form values remain valid without changing the managed suggestion lists.
+        for (int index = 0; index < 3; index++) {
+            String payload = index == 2 ? suggested.replace("Praça da Matriz", "Local recusado")
+                    .replace("Acervo da família", "Origem recusada") : suggested;
+            var draft = mvc.perform(multipart("/api/admin/drafts")
+                            .file(new MockMultipartFile("memory", "", "application/json", payload.getBytes(StandardCharsets.UTF_8)))
+                            .session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                    .andExpect(status().isCreated()).andReturn();
+            long draftId = json.readTree(draft.getResponse().getContentAsByteArray()).get("id").asLong();
+            if (index == 2) {
+                mvc.perform(patch("/api/admin/contributions/{id}", draftId).session(session).cookie(csrf)
+                                .header("X-XSRF-TOKEN", csrf.getValue()).contentType("application/json")
+                                .content("{\"status\":\"REJECTED\"}"))
+                        .andExpect(status().isNoContent());
+            }
+        }
+        mvc.perform(get("/api/admin/record-options").session(session)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.places.length()").value(0))
+                .andExpect(jsonPath("$.sources.length()").value(0));
+        mvc.perform(get("/api/admin/dashboard").session(session))
+                .andExpect(jsonPath("$.collaborators").value(1));
     }
 
     private void verifyEditorialPublishing(MockHttpSession session, Cookie csrf, MockMultipartFile submission,

@@ -12,20 +12,29 @@
       </div>
     } @else {
       <form class="card card-body form-grid" [formGroup]="form" (ngSubmit)="submit()">
-        <p class="full" aria-live="polite">{{completed()}} de 8 itens obrigatórios preenchidos.</p>
+        <p class="full" aria-live="polite">{{completed()}} de {{requiredFields.length}} itens obrigatórios preenchidos.</p>
+        @if (admin) {<p class="full">Apenas Tipo de material, Coleção e Título são obrigatórios. Os demais campos são opcionais.</p>}
         @if (related) {<p class="full">Informação complementar ao registro <a [routerLink]="['/acervo', related]">{{related}}</a>.</p>}
-        <label>Nome <input formControlName="name" autocomplete="name" maxlength="150" required></label>
-        <label>E-mail <input formControlName="email" type="email" autocomplete="email" maxlength="254" required></label>
+        <label>Nome <input formControlName="name" autocomplete="name" maxlength="150" [required]="!admin"></label>
+        <label>E-mail <input formControlName="email" type="email" autocomplete="email" maxlength="254" [required]="!admin"></label>
         <label>Tipo de material <select formControlName="type" required><option value="">Selecione</option>@for (type of types; track type) {<option>{{type}}</option>}</select></label>
         <label>Coleção <select formControlName="collection" required><option value="">Selecione</option>@for (item of collections.state().data; track item.slug) {<option [value]="item.slug">{{item.title}}</option>}</select></label>
         @if (collections.state().phase === 'error') {<error-state class="full" message="Não foi possível carregar as coleções." (retry)="collections.refresh()"/>}
         <label class="full">Título <input formControlName="title" maxlength="180" required></label>
-        <label class="full">Descrição <textarea formControlName="description" maxlength="6000" required></textarea></label>
+        <label class="full">Descrição <textarea formControlName="description" maxlength="6000" [required]="!admin"></textarea></label>
         <label>Data aproximada <input formControlName="period" maxlength="150"></label>
-        <label>Local <input formControlName="place" maxlength="180"></label>
-        <label class="full">Origem do material <input formControlName="source" maxlength="500" required></label>
+        <label>Local <input formControlName="place" maxlength="180" [attr.list]="admin ? 'record-places' : null"></label>
+        <label class="full">Origem do material <input formControlName="source" maxlength="500" [required]="!admin" [attr.list]="admin ? 'record-sources' : null"></label>
+        @if (admin) {
+          <datalist id="record-places">@for (place of options.state().data?.places; track place) {<option [value]="place"></option>}</datalist>
+          <datalist id="record-sources">@for (source of options.state().data?.sources; track source) {<option [value]="source"></option>}</datalist>
+          <div class="actions full"><a routerLink="/admin/locais-e-origens" target="_blank" rel="noopener">Cadastrar locais e origens (nova aba)</a>
+            <button class="button outline" type="button" (click)="options.refresh()">Atualizar listas</button>
+          </div>
+          @if (options.state().phase === 'error') {<error-state class="full" message="Não foi possível carregar as sugestões de locais e origens. Você pode preencher os campos livremente." (retry)="options.refresh()"/>}
+        }
         <file-uploader class="full" (changed)="files.set($event)"/>
-        <label class="checkbox full"><input type="checkbox" formControlName="consent" required>
+        <label class="checkbox full"><input type="checkbox" formControlName="consent" [required]="!admin">
           Autorizo o envio e a publicação do material e confirmo que tenho autorização para compartilhá-lo.
         </label>
         @if (error()) {<p class="error full" role="alert">{{error()}}</p>}

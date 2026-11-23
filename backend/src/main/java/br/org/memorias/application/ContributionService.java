@@ -32,16 +32,24 @@ public class ContributionService {
     }
 
     public long submit(Submission submission, List<MultipartFile> files) {
-        if (!Boolean.TRUE.equals(submission.consent())) throw bad("É necessário autorizar o envio e a publicação.");
+        return submit(submission, files, false);
+    }
+
+    public long submitDraft(Submission submission, List<MultipartFile> files) {
+        return submit(submission, files, true);
+    }
+
+    private long submit(Submission submission, List<MultipartFile> files, boolean draft) {
+        if (!draft && !Boolean.TRUE.equals(submission.consent())) throw bad("É necessário autorizar o envio e a publicação.");
         if (files.size() > 5) throw bad("Envie até cinco arquivos.");
-        String name = required(submission.name(), 150, "Nome");
-        String email = required(submission.email(), 254, "E-mail");
-        if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw bad("Informe um e-mail válido.");
+        String name = draft ? optional(submission.name(), 150, "Nome") : required(submission.name(), 150, "Nome");
+        String email = draft ? optional(submission.email(), 254, "E-mail") : required(submission.email(), 254, "E-mail");
+        if (!email.isEmpty() && !email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw bad("Informe um e-mail válido.");
         String title = required(submission.title(), 180, "Título");
         String type = required(submission.type(), 80, "Tipo de material");
         if (!TYPES.contains(type)) throw bad("Tipo de material inválido.");
-        String description = required(submission.description(), 6000, "Descrição");
-        String source = required(submission.source(), 500, "Origem do material");
+        String description = draft ? optional(submission.description(), 6000, "Descrição") : required(submission.description(), 6000, "Descrição");
+        String source = draft ? optional(submission.source(), 500, "Origem do material") : required(submission.source(), 500, "Origem do material");
         String period = optional(submission.period(), 150, "Data aproximada");
         String place = optional(submission.place(), 180, "Local");
         String collection = required(submission.collection(), 50, "Coleção");
@@ -52,7 +60,8 @@ public class ContributionService {
                 if (!collections.exists(collection)) throw bad("Coleção inválida.");
                 Long related = submission.relatedMemory();
                 if (related != null && !archive.published(related)) throw bad("Registro relacionado inválido.");
-                long id = writer.insert(collection, name, email, title, type, description, period, place, source, related);
+                long id = writer.insert(collection, name, email, title, type, description, period, place, source,
+                        Boolean.TRUE.equals(submission.consent()), related);
                 for (MultipartFile file : files) attachments.save(id, file, createdKeys);
                 return id;
             });

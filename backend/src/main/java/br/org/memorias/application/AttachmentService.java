@@ -20,6 +20,8 @@ import br.org.memorias.storage.FileStorage;
 @Service
 public class AttachmentService {
     private static final Logger LOG = LoggerFactory.getLogger(AttachmentService.class);
+    private static final long FILE_LIMIT = 20L * 1024 * 1024;
+    private static final long VIDEO_LIMIT = 300L * 1024 * 1024;
     private final AttachmentRepository attachments;
     private final FileStorage files;
 
@@ -30,8 +32,8 @@ public class AttachmentService {
 
     public void save(long id, MultipartFile file, List<String> createdKeys)   
     {
-        if (file.isEmpty() || file.getSize() > 20L * 1024 * 1024)
-            throw bad("Cada arquivo deve ter até 20 MB.");
+        if (file.isEmpty()) throw bad("O arquivo não pode estar vazio.");
+        if (file.getSize() > VIDEO_LIMIT) throw bad("Vídeos MP4 devem ter até 300 MB; os demais arquivos, até 20 MB.");
         String filename = file.getOriginalFilename() == null ? "arquivo" : file.getOriginalFilename();
         filename = filename.replace('\\', '/');
         filename = required(filename.substring(filename.lastIndexOf('/') + 1).replaceAll("\\p{Cntrl}", ""), 240,
@@ -42,6 +44,8 @@ public class AttachmentService {
             byte[] header = input.readNBytes(16);
             input.reset();
             String type = identify(header);
+            long limit = type.equals("video/mp4") ? VIDEO_LIMIT : FILE_LIMIT;
+            if (file.getSize() > limit) throw bad("Vídeos MP4 devem ter até 300 MB; os demais arquivos, até 20 MB.");
             createdKeys.add(key);
             files.put(key, input, file.getSize(), type);
             attachments.insert(id, key, filename, type);

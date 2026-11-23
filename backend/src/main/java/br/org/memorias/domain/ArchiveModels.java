@@ -14,6 +14,9 @@ public final class ArchiveModels {
     public record Facets(List<String> types, List<String> categories, List<String> places) {
     }
 
+    public record RecordOptions(List<String> places, List<String> sources) {
+    }
+
     public record Page(List<Memory> items, long total, int page, int size) {
     }
 

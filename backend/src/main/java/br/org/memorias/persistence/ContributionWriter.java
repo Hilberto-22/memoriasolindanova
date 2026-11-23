@@ -10,15 +10,15 @@ public class ContributionWriter {
     ContributionWriter(JdbcClient db) { this.db = db; }
 
     public long insert(String collection, String name, String email, String title, String type,
-                       String description, String period, String place, String source, Long related) {
+                       String description, String period, String place, String source, boolean consent, Long related) {
         var key = new GeneratedKeyHolder();
         db.sql("""
                 insert into contributions
                 (collection_slug,name,email,title,material_type,description,period,place,source,consent,related_memory)
-                values (:collection,:name,:email,:title,:type,:description,:period,:place,:source,true,:related)
+                values (:collection,:name,:email,:title,:type,:description,:period,:place,:source,:consent,:related)
                 """).param("collection", collection).param("name", name).param("email", email)
                 .param("title", title).param("type", type).param("description", description)
-                .param("period", period).param("place", place).param("source", source)
+                .param("period", period).param("place", place).param("source", source).param("consent", consent)
                 .param("related", related, java.sql.Types.BIGINT).update(key, "id");
         return key.getKey().longValue();
     }

@@ -12,8 +12,14 @@
     <label class="full">Descrição histórica<textarea formControlName="description" maxlength="6000" required></textarea></label>
     <label>Período<input formControlName="period" maxlength="150"></label>
     <label>Ano histórico<input type="number" min="1" max="2200" formControlName="year"></label>
-    <label>Local<input formControlName="place" maxlength="180"></label>
-    <label>Fonte<input formControlName="source" maxlength="500" required></label>
+    <label>Local<input formControlName="place" maxlength="180" list="record-places"></label>
+    <label>Origem do material<input formControlName="source" maxlength="500" list="record-sources" required></label>
+    <datalist id="record-places">@for (place of options.state().data?.places; track place) {<option [value]="place"></option>}</datalist>
+    <datalist id="record-sources">@for (source of options.state().data?.sources; track source) {<option [value]="source"></option>}</datalist>
+    <div class="actions full"><a routerLink="/admin/locais-e-origens" target="_blank" rel="noopener">Cadastrar locais e origens (nova aba)</a>
+      <button class="button outline" type="button" (click)="options.refresh()">Atualizar listas</button>
+    </div>
+    @if (options.state().phase === 'error') {<error-state class="full" message="Não foi possível carregar as sugestões de locais e origens. Você pode preencher os campos livremente." (retry)="options.refresh()"/>}
     <label>Latitude<input type="number" min="-90" max="90" step="any" formControlName="latitude"></label>
     <label>Longitude<input type="number" min="-180" max="180" step="any" formControlName="longitude"></label>
     <label>Créditos<input formControlName="credits" maxlength="250" required></label>

@@ -13,7 +13,7 @@ No proxy existente:
 - Redirecione HTTP para HTTPS.
 - Encaminhe todas as rotas para o portal, incluindo `/api/`.
 - Preserve `Host` e envie `X-Forwarded-Proto: https` nas requisições HTTPS. O proxy de entrada deve substituir os cabeçalhos de encaminhamento recebidos dos clientes.
-- Permita requisições de pelo menos `105 MiB` e um tempo de resposta de `120s`, acompanhando a configuração interna. Cada arquivo continua limitado a `20 MiB` pela aplicação.
+- Permita requisições de pelo menos `1505 MiB` e um tempo de resposta de `600s`, acompanhando a configuração interna. A aplicação aceita até cinco arquivos por envio: vídeos MP4 de até `300 MiB` cada e os demais formatos de até `20 MiB` cada. O limite total inclui margem para os campos e cabeçalhos multipart.
 
 O Nginx existente na VPS deve encaminhar para `http://127.0.0.1:8088` (ou a porta definida em `PORTAL_PORT`). Use um bloco exclusivo para este domínio, mantendo os blocos dos outros dois sistemas. O arquivo `nginx-memoriasolindanova.conf` é o bloco HTTP inicial; `nginx-https.conf.example` mostra a configuração final para certificados nos caminhos padrão do Let's Encrypt.
 

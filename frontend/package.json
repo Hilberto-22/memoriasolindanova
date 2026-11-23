@@ -4,7 +4,7 @@
   "scripts": {
     "start": "ng serve --proxy-config proxy.json",
     "build": "ng build",
-    "test": "node --test tests/city-history.test.cjs"
+    "test": "node --test tests/city-history.test.cjs tests/file-uploader.test.cjs"
   },
   "dependencies": {
     "@angular/common": "20.3.31",

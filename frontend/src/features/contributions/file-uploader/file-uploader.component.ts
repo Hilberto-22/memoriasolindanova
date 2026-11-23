@@ -10,8 +10,11 @@ export class FileUploader {
   readonly names = signal<string[]>([]);
   select(input: HTMLInputElement) {
     const files = Array.from(input.files ?? []);
-    const invalid = files.length > 5 || files.some(file => !file.size || file.size > 20 * 1024 * 1024);
-    this.error.set(invalid ? 'Selecione até cinco arquivos com até 20 MB cada.' : '');
+    const invalid = files.length > 5 || files.some(file => {
+      const video = file.type === 'video/mp4' || /\.mp4$/i.test(file.name);
+      return !file.size || file.size > (video ? 300 : 20) * 1024 * 1024;
+    });
+    this.error.set(invalid ? 'Selecione até cinco arquivos. Vídeos MP4: até 300 MB cada; demais arquivos: até 20 MB cada.' : '');
     if (invalid) input.value = '';
     this.names.set(invalid ? [] : files.map(file => file.name));
     this.changed.emit(invalid ? [] : files);

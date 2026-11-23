@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class PublicationRepository {
     private final JdbcClient db;
-    PublicationRepository(JdbcClient db) { this.db = db; }
+    public PublicationRepository(JdbcClient db) { this.db = db; }
 
     public void publish(long id, String category, String credits, String usage, Integer year, Double lat, Double lon) {
         db.sql("""

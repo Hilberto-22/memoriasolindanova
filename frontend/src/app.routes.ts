@@ -10,6 +10,7 @@ import { DashboardPage } from "./features/admin/dashboard-page/dashboard-page.co
 import { LoginPage } from "./features/admin/login-page/login-page.component";
 import { PortalEditor } from "./features/admin/portal-editor/portal-editor.component";
 import { RecordEditor } from "./features/admin/record-editor/record-editor.component";
+import { RecordOptionsEditor } from "./features/admin/record-options-editor/record-options-editor.component";
 import { RecordManagement } from "./features/admin/record-management/record-management.component";
 import { ReportsPage } from "./features/admin/reports-page/reports-page.component";
 import { ReviewPage } from "./features/admin/review-page/review-page.component";
@@ -65,6 +66,11 @@ export const routes: Routes = [
         path: "colecoes",
         component: CollectionEditor,
         title: "Coleções — Administração",
+      },
+      {
+        path: "locais-e-origens",
+        component: RecordOptionsEditor,
+        title: "Locais e origens — Administração",
       },
       {
         path: "conta",

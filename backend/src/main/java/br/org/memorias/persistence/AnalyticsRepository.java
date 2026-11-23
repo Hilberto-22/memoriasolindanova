@@ -30,7 +30,7 @@ public class AnalyticsRepository {
     }
 
     public long collaborators() {
-        return db.sql("select count(distinct lower(email)) from contributions").query(Long.class).single();
+        return db.sql("select count(distinct lower(email)) from contributions where email <> ''").query(Long.class).single();
     }
 
     public List<LocalDate> submissionDates(OffsetDateTime from) {

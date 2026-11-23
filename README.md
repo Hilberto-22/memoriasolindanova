@@ -84,6 +84,12 @@ O banco começa com as seis coleções e nenhum registro histórico. O formulár
 
 Os anexos passam pela API. Arquivos de contribuições pendentes ou recusadas exigem acesso administrativo. A conta administrativa é provisionada por variáveis de ambiente.
 
+Cada envio aceita até cinco arquivos: vídeos MP4 de até 300 MB cada e imagens, documentos e áudios de até 20 MB cada. A API verifica o formato pelo conteúdo do arquivo. Os limites do formulário, da API e dos exemplos de Nginx estão alinhados para permitir esse envio; ao atualizar a VPS, aplique também os limites no proxy HTTPS existente, conforme [o roteiro de implantação](infra/VPS.md).
+
+No cadastro administrativo de registros, somente **Tipo de material**, **Coleção** e **Título** são obrigatórios. Os demais campos e os anexos são opcionais. Se informado, o e-mail deve ser válido. **Local** e **Origem do material** oferecem sugestões cadastradas em **Administração → Locais e origens**, sem repetições, e também permitem digitar novos valores. O formulário público mantém suas regras de contribuição e autorização.
+
+Em **Locais e origens**, a equipe inclui, edita e remove as opções de cada lista. A atualização do banco importa os locais e origens existentes nos registros publicados e pendentes. As listas ficam disponíveis no cadastro e na edição de registros; o link **Cadastrar locais e origens** abre a gestão em outra aba, e **Atualizar listas** carrega as alterações sem apagar o formulário em preenchimento. Alterar ou remover uma opção não modifica os registros já salvos. Valores digitados livremente nos registros não são incluídos automaticamente nas listas; cadastre-os nessa área para reutilização.
+
 ## Escopo da entrega
 
 A interface pública, a moderação, o painel com dados persistidos e o relatório CSV compõem a aplicação. Em **Administração → Acervo**, é possível editar os metadados de registros publicados. As coordenadas e o ano histórico do registro determinam sua presença no mapa e na linha do tempo. A página de Usuários informa como a conta administrativa é provisionada.

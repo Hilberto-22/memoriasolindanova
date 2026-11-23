@@ -10,8 +10,9 @@ spring:
     password: ${DATABASE_PASSWORD:}
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 105MB
+      max-file-size: 300MB
+      # Five videos of 300 MB plus multipart fields and headers.
+      max-request-size: 1505MB
 
 memorias:
   admin-user: ${ADMIN_USER:admin}
