@@ -10,9 +10,10 @@ import { EmptyState } from '../../../shared/components/empty-state/empty-state.c
 import { ErrorState } from '../../../shared/components/error-state/error-state.component';
 import { LoadingState } from '../../../shared/components/loading-state/loading-state.component';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge.component';
+import { FileGallery } from '../../../shared/components/file-gallery/file-gallery.component';
 
 @Component({
-  imports:[RouterLink, ReactiveFormsModule, ConfirmDialog, EmptyState, ErrorState, LoadingState, StatusBadge],
+  imports:[RouterLink, ReactiveFormsModule, ConfirmDialog, EmptyState, ErrorState, LoadingState, StatusBadge, FileGallery],
   templateUrl: './review-page.component.html'
 })
 export class ReviewPage {

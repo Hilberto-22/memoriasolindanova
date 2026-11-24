@@ -1,12 +1,13 @@
 server {
     listen 80;
-    server_name memoriasolindanova.com.br;
+    server_name memoriasolindanova.com.br www.memoriasolindanova.com.br;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name memoriasolindanova.com.br;
+    server_name memoriasolindanova.com.br www.memoriasolindanova.com.br;
+    # The certificate must cover both hostnames.
     ssl_certificate /etc/letsencrypt/live/memoriasolindanova.com.br/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/memoriasolindanova.com.br/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;

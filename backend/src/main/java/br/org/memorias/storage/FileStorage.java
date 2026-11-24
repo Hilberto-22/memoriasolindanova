@@ -7,5 +7,9 @@ public interface FileStorage {
 
     InputStream open(String key) throws Exception;
 
+    long size(String key) throws Exception;
+
+    InputStream openRange(String key, long offset, long length) throws Exception;
+
     void remove(String key) throws Exception;
 }

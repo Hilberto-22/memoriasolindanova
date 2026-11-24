@@ -1,6 +1,7 @@
 package br.org.memorias.web;
 
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
@@ -19,20 +20,54 @@ class FileController {
         this.storage = storage;
     }
     @GetMapping("/files/{id}")
-    ResponseEntity<InputStreamResource> publicFile(@PathVariable long id) { return file(id, false); }
+    ResponseEntity<InputStreamResource> publicFile(@PathVariable long id,
+            @RequestParam(defaultValue = "false") boolean download, HttpServletRequest request) {
+        return file(id, false, download, request);
+    }
 
     @GetMapping("/admin/files/{id}")
-    ResponseEntity<InputStreamResource> privateFile(@PathVariable long id) { return file(id, true); }
+    ResponseEntity<InputStreamResource> privateFile(@PathVariable long id,
+            @RequestParam(defaultValue = "false") boolean download, HttpServletRequest request) {
+        return file(id, true, download, request);
+    }
 
-    private ResponseEntity<InputStreamResource> file(long id, boolean admin) {
+    private ResponseEntity<InputStreamResource> file(long id, boolean admin, boolean download, HttpServletRequest request) {
+        // Check authorization before accessing metadata or content, including byte ranges.
         var file = found(archive.storedFile(id, admin));
         try {
-            var content = new InputStreamResource(storage.open(file.key()));
-            var disposition = file.type().startsWith("image/") ? ContentDisposition.inline() : ContentDisposition.attachment();
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType(file.type()))
-                    .cacheControl(CacheControl.noStore())
-                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.filename(file.name(), StandardCharsets.UTF_8).build().toString())
-                    .body(content);
+            long size = storage.size(file.key());
+            boolean head = request.getMethod().equals("HEAD");
+            long start = 0;
+            long end = size - 1;
+            boolean partial = false;
+            String range = request.getHeader(HttpHeaders.RANGE);
+            if (!head && request.getHeader(HttpHeaders.IF_RANGE) == null && range != null && range.startsWith("bytes=")) {
+                try {
+                    var ranges = HttpRange.parseRanges(range);
+                    if (ranges.isEmpty()) throw new IllegalArgumentException("Empty range");
+                    // Multiple ranges may be ignored; media players request one range at a time.
+                    if (ranges.size() == 1) {
+                        start = ranges.getFirst().getRangeStart(size);
+                        end = ranges.getFirst().getRangeEnd(size);
+                        if (start >= size || end < start) throw new IllegalArgumentException("Unsatisfiable range");
+                        partial = true;
+                    }
+                } catch (IllegalArgumentException failure) {
+                    return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                            .header(HttpHeaders.CONTENT_RANGE, "bytes */" + size)
+                            .header(HttpHeaders.ACCEPT_RANGES, "bytes").build();
+                }
+            }
+            long length = partial ? end - start + 1 : size;
+            var disposition = download ? ContentDisposition.attachment() : ContentDisposition.inline();
+            var response = ResponseEntity.status(partial ? HttpStatus.PARTIAL_CONTENT : HttpStatus.OK)
+                    .contentType(MediaType.parseMediaType(file.type())).contentLength(length)
+                    .cacheControl(CacheControl.noStore()).header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.filename(file.name(), StandardCharsets.UTF_8).build().toString());
+            if (partial) response.header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + size);
+            if (head) return response.build();
+            var input = partial ? storage.openRange(file.key(), start, length) : storage.open(file.key());
+            return response.body(new InputStreamResource(input));
         } catch (Exception error) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Arquivo indisponível.", error);
         }

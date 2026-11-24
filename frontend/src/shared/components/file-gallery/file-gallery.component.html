@@ -1,0 +1,27 @@
+<div class="file-gallery">
+  @for (file of files(); track file.id) {
+    <article class="card card-body file-preview">
+      <h3>{{file.name}}</h3>
+      @if (file.contentType.startsWith('image/')) {
+        <a [href]="file.url" target="_blank" rel="noopener" [attr.aria-label]="'Abrir imagem: ' + file.name">
+          <img [src]="file.url" [alt]="file.name" loading="lazy">
+        </a>
+      } @else if (file.contentType.startsWith('video/')) {
+        <video controls playsinline preload="metadata" [src]="file.url" [attr.aria-label]="file.name" (error)="mediaError(file.id)">
+          Seu navegador não suporta a reprodução deste vídeo. Use o link para abrir ou baixar o arquivo.
+        </video>
+      } @else if (file.contentType.startsWith('audio/')) {
+        <audio controls preload="metadata" [src]="file.url" [attr.aria-label]="file.name" (error)="mediaError(file.id)">
+          Seu navegador não suporta a reprodução deste áudio. Use o link para abrir ou baixar o arquivo.
+        </audio>
+      }
+      @if (failed().includes(file.id)) {
+        <p class="error" role="status">Não foi possível reproduzir este arquivo no navegador. Você pode abri-lo em outra aba ou baixá-lo.</p>
+      }
+      <div class="actions">
+        <a [href]="file.url" target="_blank" rel="noopener" [attr.aria-label]="'Abrir ' + file.name">{{file.contentType === 'application/pdf' ? 'Visualizar documento' : 'Abrir arquivo'}}</a>
+        <a [href]="downloadUrl(file)" [attr.download]="file.name" [attr.aria-label]="'Baixar ' + file.name">Baixar</a>
+      </div>
+    </article>
+  }
+</div>

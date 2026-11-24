@@ -89,6 +89,8 @@ class AttachmentUploadLimitTest {
             this.type = type;
         }
         @Override public InputStream open(String key) { throw new UnsupportedOperationException(); }
+        @Override public long size(String key) { throw new UnsupportedOperationException(); }
+        @Override public InputStream openRange(String key, long offset, long length) { throw new UnsupportedOperationException(); }
         @Override public void remove(String key) { throw new UnsupportedOperationException(); }
     }
 }

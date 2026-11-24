@@ -117,3 +117,22 @@ Com o túnel aberto, acesse `http://localhost:9001`. Adapte a porta remota se ti
 Depois de atualizar o código, reaplique `docker compose -f compose.yaml -f compose.vps.yaml up -d --build`. Um `restart` isolado não aplica mudanças em variáveis ou no Compose.
 
 O MinIO usado aqui é compilado a partir das versões fixadas no projeto. A limitação de manutenção da edição comunitária está descrita no README; a configuração de publicação não atualiza essas versões.
+
+## Upload retorna 413
+
+O Nginx instalado na VPS e o Nginx do container são configurações independentes. Atualizar o código e reconstruir o portal não altera o arquivo ativo em `/etc/nginx`. Sem `client_max_body_size` configurado, o Nginx limita o envio a 1 MiB, antes de a requisição chegar à API.
+
+Confira os blocos ativos, incluindo o endereço com `www`:
+
+```bash
+sudo nginx -T 2>&1 | grep -nE 'configuration file|server_name|client_max_body_size|proxy_read_timeout'
+```
+
+No arquivo ativo deste domínio (por exemplo, `/etc/nginx/sites-available/memoriasolindanova.com.br`), acrescente ou atualize `client_max_body_size 1505m;` dentro do bloco HTTPS (`server` com `listen 443 ssl`). Mantenha `proxy_read_timeout 600s;` no servidor ou na localização que encaminha para o portal. Se houver limite menor em `location /` ou `location /api/`, atualize-o também, pois ele substitui o valor do servidor. Preserve as diretivas de certificado e os blocos dos outros sites.
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+docker compose -f compose.yaml -f compose.vps.yaml exec -T portal nginx -T 2>&1 | grep -nE 'client_max_body_size|proxy_read_timeout'
+```
+
+O Nginx do container também deve mostrar `1505m` e `600s`. Se ainda mostrar valores antigos, reconstrua os serviços com `docker compose -f compose.yaml -f compose.vps.yaml up -d --build`. Teste novamente o upload com o mesmo domínio que o navegador utiliza.

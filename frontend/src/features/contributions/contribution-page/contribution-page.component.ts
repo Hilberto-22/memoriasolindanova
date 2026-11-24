@@ -67,7 +67,9 @@ export class ContributionPage {
       },
       error: (failure: HttpErrorResponse) => {
         this.sending.set(false);
-        this.error.set(failure.error?.message ?? 'Não foi possível enviar a contribuição. Tente novamente.');
+        this.error.set(failure.status === 413
+          ? 'O servidor recusou o tamanho do envio. Vídeos MP4 podem ter até 300 MB cada; os demais arquivos, até 20 MB. Se os arquivos estão dentro desses limites, avise a equipe do acervo.'
+          : failure.error?.message ?? 'Não foi possível enviar a contribuição. Tente novamente.');
       }
     });
   }

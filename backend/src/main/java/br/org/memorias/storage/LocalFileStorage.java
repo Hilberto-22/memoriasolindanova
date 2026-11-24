@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 
 final class LocalFileStorage implements FileStorage {
     private final Path directory;
@@ -20,6 +23,23 @@ final class LocalFileStorage implements FileStorage {
     @Override
     public InputStream open(String key) throws IOException {
         return Files.newInputStream(directory.resolve(key));
+    }
+
+    @Override
+    public long size(String key) throws IOException {
+        return Files.size(directory.resolve(key));
+    }
+
+    @Override
+    public InputStream openRange(String key, long offset, long length) throws IOException {
+        var channel = FileChannel.open(directory.resolve(key), StandardOpenOption.READ);
+        try {
+            channel.position(offset);
+            return new LimitedInputStream(Channels.newInputStream(channel), length);
+        } catch (IOException | RuntimeException failure) {
+            channel.close();
+            throw failure;
+        }
     }
 
     @Override

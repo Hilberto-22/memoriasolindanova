@@ -7,9 +7,10 @@ import { stateOf } from '../../../data-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state.component';
 import { LoadingState } from '../../../shared/components/loading-state/loading-state.component';
 import { PageTitle } from '../../../shared/components/page-title/page-title.component';
+import { FileGallery } from '../../../shared/components/file-gallery/file-gallery.component';
 
 @Component({
-  imports:[RouterLink, PageTitle, ErrorState, LoadingState],
+  imports:[RouterLink, PageTitle, ErrorState, LoadingState, FileGallery],
   templateUrl: './detail-page.component.html'
 })
 export class DetailPage {

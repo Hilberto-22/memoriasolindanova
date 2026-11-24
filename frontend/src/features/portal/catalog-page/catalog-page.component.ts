@@ -33,7 +33,7 @@ export class CatalogPage {
   readonly increment = (value: number) => value + 1;
   readonly cards = computed(() => {
     const counts = new Map(this.counts.state().data?.map(item => [item.label,item.count]));
-    return materialTypes.slice(0,5).map(item => ({...item,count:counts.get(item.type) ?? 0}));
+    return materialTypes.map(item => ({...item,count:counts.get(item.type) ?? 0}));
   });
   private readonly params = toSignal(this.route.queryParamMap, {requireSync:true});
   readonly filters = computed(() => filtersOf(this.params()));

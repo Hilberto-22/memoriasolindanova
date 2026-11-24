@@ -5,11 +5,9 @@
       <page-title [title]="item.title" [description]="item.type"/>
       <div class="wrap section preview-grid">
         <div>
-          @if (item.imageUrl) {<img class="card" [src]="item.imageUrl" [alt]="item.title">}
+          @if (item.imageUrl && !item.files?.length) {<img class="card" [src]="item.imageUrl" [alt]="item.title">}
           @if (item.files?.length) {
-            <section class="section"><h2>Galeria de arquivos</h2><ul>
-              @for (file of item.files; track file.id) {<li><a [href]="file.url" target="_blank" rel="noopener">{{file.name}}</a></li>}
-            </ul></section>
+            <section><h2>Arquivos do registro</h2><file-gallery [files]="item.files ?? []"/></section>
           }
         </div>
         <div class="card card-body">

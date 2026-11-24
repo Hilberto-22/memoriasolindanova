@@ -14,7 +14,7 @@
             <dt>Local e período</dt><dd>{{item.place}} {{item.period}}</dd>
             @if (item.relatedMemory) {<dt>Registro relacionado</dt><dd><a [routerLink]="['/acervo',item.relatedMemory]">{{item.relatedMemory}}</a></dd>}
           </dl>
-          @if (item.files.length) {<ul>@for (file of item.files; track file.id) {<li><a [href]="file.url" target="_blank" rel="noopener">{{file.name}}</a></li>}</ul>}
+          @if (item.files.length && selected() === item.id) {<file-gallery [files]="item.files"/>}
           @if (item.status === 'PENDING' && selected() === item.id) {
             <form class="form-grid" [formGroup]="form" (ngSubmit)="review(item,'APPROVED')">
               <label>Categoria<input formControlName="category" maxlength="100" required></label>
