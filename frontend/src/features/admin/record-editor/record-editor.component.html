@@ -5,13 +5,20 @@
 } @else {
   <form class="card card-body form-grid" [formGroup]="form" (ngSubmit)="save()">
     <label class="full">Título<input formControlName="title" maxlength="180" required></label>
-    <label>Categoria<input formControlName="category" maxlength="100" required></label>
+    <label>Categoria (obrigatório)
+      <input formControlName="category" maxlength="100" list="publication-categories" placeholder="Ex.: Educação" aria-describedby="publication-category-help" required>
+      <small id="publication-category-help" class="field-hint">Tema do registro, usado nos filtros do acervo. Escolha uma sugestão ou digite outra categoria.</small>
+    </label>
+    <datalist id="publication-categories">@for (category of categories(); track category) {<option [value]="category"></option>}</datalist>
     <label>Coleção<select formControlName="collectionSlug" required>
       @for (item of collections.state().data; track item.slug) {<option [value]="item.slug">{{item.title}}</option>}
     </select></label>
     <label class="full">Descrição histórica<textarea formControlName="description" maxlength="6000" required></textarea></label>
     <label>Período<input formControlName="period" maxlength="150"></label>
-    <label>Ano histórico<input type="number" min="1" max="2200" formControlName="year"></label>
+    <label>Ano histórico (opcional)
+      <input type="number" min="1" max="2200" formControlName="year" placeholder="Ex.: 1998" aria-describedby="publication-year-help">
+      <small id="publication-year-help" class="field-hint">Ano a que o registro se refere, usado na linha do tempo. Se não souber, deixe em branco.</small>
+    </label>
     <label>Local<input formControlName="place" maxlength="180" list="record-places"></label>
     <label>Origem do material<input formControlName="source" maxlength="500" list="record-sources" required></label>
     <datalist id="record-places">@for (place of options.state().data?.places; track place) {<option [value]="place"></option>}</datalist>
@@ -20,10 +27,23 @@
       <button class="button outline" type="button" (click)="options.refresh()">Atualizar listas</button>
     </div>
     @if (options.state().phase === 'error') {<error-state class="full" message="Não foi possível carregar as sugestões de locais e origens. Você pode preencher os campos livremente." (retry)="options.refresh()"/>}
-    <label>Latitude<input type="number" min="-90" max="90" step="any" formControlName="latitude"></label>
-    <label>Longitude<input type="number" min="-180" max="180" step="any" formControlName="longitude"></label>
-    <label>Créditos<input formControlName="credits" maxlength="250" required></label>
-    <label>Condições de uso<input formControlName="usage" maxlength="500" required></label>
+    <label>Latitude (opcional)
+      <input type="number" min="-90" max="90" step="any" formControlName="latitude" placeholder="Entre -90 e 90" aria-describedby="publication-latitude-help">
+      <small id="publication-latitude-help" class="field-hint">Coordenada norte–sul do local para aparecer no mapa. Preencha junto com a longitude ou deixe ambas em branco.</small>
+    </label>
+    <label>Longitude (opcional)
+      <input type="number" min="-180" max="180" step="any" formControlName="longitude" placeholder="Entre -180 e 180" aria-describedby="publication-longitude-help">
+      <small id="publication-longitude-help" class="field-hint">Coordenada leste–oeste do mesmo local, em graus decimais. Preencha junto com a latitude.</small>
+    </label>
+    <label>Créditos (obrigatório)
+      <input formControlName="credits" maxlength="250" placeholder="Ex.: Gravação: Maria Silva — Acervo da escola" aria-describedby="publication-credits-help" required>
+      <small id="publication-credits-help" class="field-hint">Informe o autor ou a instituição responsável pelo material. Quem enviou pode ser uma pessoa diferente.</small>
+    </label>
+    <label>Condições de uso (obrigatório)
+      <input formControlName="usage" maxlength="500" list="publication-usage" placeholder="Escolha um modelo ou descreva as condições" aria-describedby="publication-usage-help" required>
+      <small id="publication-usage-help" class="field-hint">Explique como o público pode reutilizar o material. Use um modelo apenas se corresponder às permissões confirmadas; adapte o texto se necessário.</small>
+    </label>
+    <datalist id="publication-usage">@for (usage of usageSuggestions; track usage) {<option [value]="usage"></option>}</datalist>
     @if (form.invalid && form.touched) {<p class="error full" role="alert">Verifique os campos obrigatórios, o ano e as coordenadas.</p>}
     @if (error()) {<p class="error full" role="alert">{{error()}}</p>}
     @if (message()) {<p class="full" role="status">{{message()}}</p>}

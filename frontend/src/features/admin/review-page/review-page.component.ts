@@ -1,8 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { of } from 'rxjs';
 import { Api, Contribution } from '../../../api';
 import { resource } from '../../../data-state';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -11,6 +10,7 @@ import { ErrorState } from '../../../shared/components/error-state/error-state.c
 import { LoadingState } from '../../../shared/components/loading-state/loading-state.component';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge.component';
 import { FileGallery } from '../../../shared/components/file-gallery/file-gallery.component';
+import { publicationCategories, PUBLICATION_USAGE_SUGGESTIONS } from '../publication-options';
 
 @Component({
   imports:[RouterLink, ReactiveFormsModule, ConfirmDialog, EmptyState, ErrorState, LoadingState, StatusBadge, FileGallery],
@@ -19,6 +19,9 @@ import { FileGallery } from '../../../shared/components/file-gallery/file-galler
 export class ReviewPage {
   private readonly api = inject(Api);
   readonly data = resource(() => this.api.contributions());
+  readonly facets = resource(() => this.api.facets());
+  readonly categories = computed(() => publicationCategories(this.facets.state().data?.categories));
+  readonly usageSuggestions = PUBLICATION_USAGE_SUGGESTIONS;
   readonly selected = signal<number | null>(Number(inject(ActivatedRoute).snapshot.queryParamMap.get('registro')) || null);
   readonly error = signal('');
   readonly success = signal('');
@@ -34,7 +37,11 @@ export class ReviewPage {
   review(item: Contribution, status: 'APPROVED' | 'REJECTED') {
     if (this.busy()) return;
     if (status === 'APPROVED' && this.form.invalid) {
-      this.error.set('Preencha categoria, créditos e condições de uso e confira as datas e coordenadas.');
+      this.form.markAllAsTouched();
+      const missingRequired = ['category', 'credits', 'usage'].some(name => this.form.get(name)?.hasError('required'));
+      this.error.set(missingRequired
+        ? 'Preencha os campos obrigatórios: categoria, créditos e condições de uso.'
+        : 'Confira os valores de ano histórico, latitude e longitude. Esses campos são opcionais.');
       return;
     }
     this.busy.set(true);

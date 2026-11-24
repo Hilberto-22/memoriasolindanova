@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Api } from '../../../api';
 import { resource } from '../../../data-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state.component';
 import { LoadingState } from '../../../shared/components/loading-state/loading-state.component';
+import { publicationCategories, PUBLICATION_USAGE_SUGGESTIONS } from '../publication-options';
 
 @Component({
   imports:[ReactiveFormsModule, RouterLink, ErrorState, LoadingState],
@@ -17,6 +18,9 @@ export class RecordEditor {
   readonly record = resource(() => this.api.memory(String(this.id)));
   readonly collections = resource(() => this.api.collections());
   readonly options = resource(() => this.api.recordOptions());
+  readonly facets = resource(() => this.api.facets());
+  readonly categories = computed(() => publicationCategories(this.facets.state().data?.categories));
+  readonly usageSuggestions = PUBLICATION_USAGE_SUGGESTIONS;
   readonly busy = signal(false);
   readonly message = signal('');
   readonly error = signal('');

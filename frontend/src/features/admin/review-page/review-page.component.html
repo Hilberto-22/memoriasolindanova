@@ -17,12 +17,33 @@
           @if (item.files.length && selected() === item.id) {<file-gallery [files]="item.files"/>}
           @if (item.status === 'PENDING' && selected() === item.id) {
             <form class="form-grid" [formGroup]="form" (ngSubmit)="review(item,'APPROVED')">
-              <label>Categoria<input formControlName="category" maxlength="100" required></label>
-              <label>Créditos<input formControlName="credits" maxlength="250" required></label>
-              <label class="full">Condições de uso<input formControlName="usage" maxlength="500" required></label>
-              <label>Ano histórico<input formControlName="year" type="number" min="1" max="2200"></label>
-              <label>Latitude<input formControlName="latitude" type="number" min="-90" max="90" step="any"></label>
-              <label>Longitude<input formControlName="longitude" type="number" min="-180" max="180" step="any"></label>
+              <p class="full field-hint">Complete as informações para publicar. Os campos obrigatórios estão identificados; ano e coordenadas são opcionais.</p>
+              <label>Categoria (obrigatório)
+                <input formControlName="category" maxlength="100" list="publication-categories" placeholder="Ex.: Educação" aria-describedby="publication-category-help" required>
+                <small id="publication-category-help" class="field-hint">Tema do registro, usado nos filtros do acervo. Escolha uma sugestão ou digite outra categoria.</small>
+              </label>
+              <datalist id="publication-categories">@for (category of categories(); track category) {<option [value]="category"></option>}</datalist>
+              <label>Créditos (obrigatório)
+                <input formControlName="credits" maxlength="250" placeholder="Ex.: Gravação: Maria Silva — Acervo da escola" aria-describedby="publication-credits-help" required>
+                <small id="publication-credits-help" class="field-hint">Informe o autor ou a instituição responsável pelo material. Quem enviou pode ser uma pessoa diferente.</small>
+              </label>
+              <label class="full">Condições de uso (obrigatório)
+                <input formControlName="usage" maxlength="500" list="publication-usage" placeholder="Escolha um modelo ou descreva as condições" aria-describedby="publication-usage-help" required>
+                <small id="publication-usage-help" class="field-hint">Explique como o público pode reutilizar o material. Use um modelo apenas se corresponder às permissões confirmadas; adapte o texto se necessário.</small>
+              </label>
+              <datalist id="publication-usage">@for (usage of usageSuggestions; track usage) {<option [value]="usage"></option>}</datalist>
+              <label>Ano histórico (opcional)
+                <input formControlName="year" type="number" min="1" max="2200" placeholder="Ex.: 1998" aria-describedby="publication-year-help">
+                <small id="publication-year-help" class="field-hint">Ano a que o registro se refere, usado na linha do tempo. Se não souber, deixe em branco.</small>
+              </label>
+              <label>Latitude (opcional)
+                <input formControlName="latitude" type="number" min="-90" max="90" step="any" placeholder="Entre -90 e 90" aria-describedby="publication-latitude-help">
+                <small id="publication-latitude-help" class="field-hint">Coordenada norte–sul do local para aparecer no mapa. Preencha junto com a longitude ou deixe ambas em branco.</small>
+              </label>
+              <label>Longitude (opcional)
+                <input formControlName="longitude" type="number" min="-180" max="180" step="any" placeholder="Entre -180 e 180" aria-describedby="publication-longitude-help">
+                <small id="publication-longitude-help" class="field-hint">Coordenada leste–oeste do mesmo local, em graus decimais. Preencha junto com a latitude.</small>
+              </label>
               @if (error()) {<p class="error full" role="alert">{{error()}}</p>}
               <div class="actions full"><button class="button" type="submit" [disabled]="busy()">Aprovar e publicar</button>
                 @if (!busy()) {<confirm-dialog title="Recusar contribuição" message="Esta decisão mantém o material fora do acervo público." action="Recusar" (confirmed)="review(item,'REJECTED')"/>}
