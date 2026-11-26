@@ -1,7 +1,9 @@
 <div class="file-gallery">
   @for (file of files(); track file.id) {
     <article class="card card-body file-preview">
-      <h3>{{file.name}}</h3>
+      @if (!file.contentType.startsWith('image/') && !file.contentType.startsWith('video/')) {
+        <h3>{{file.name}}</h3>
+      }
       @if (file.contentType.startsWith('image/')) {
         <a [href]="file.url" target="_blank" rel="noopener" [attr.aria-label]="'Abrir imagem: ' + file.name">
           <img [src]="file.url" [alt]="file.name" loading="lazy">
