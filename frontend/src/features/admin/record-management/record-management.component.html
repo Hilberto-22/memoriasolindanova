@@ -1,6 +1,9 @@
 <div class="section-title"><h1>Acervo</h1><a class="button" routerLink="/admin/acervo/novo">Cadastrar registro</a></div>
 <section class="card card-body">
   <search-bar [value]="query().get('q') ?? ''" (searched)="search($event)"/>
+  @if (error()) {<p class="error" role="alert">{{error()}}</p>}
+  @if (message()) {<p role="status">{{message()}}</p>}
+  @if (removing() !== null) {<p role="status">Removendo registro…</p>}
   @if (result()?.phase === 'loading') {<loading-state/>}
   @else if (result()?.phase === 'error') {<p class="error" role="alert">Não foi possível carregar os registros.</p>}
   @else if (result()?.data; as page) {
@@ -8,7 +11,11 @@
       <div class="table-scroll"><table><thead><tr><th scope="col">ID</th><th scope="col">Título</th><th scope="col">Coleção</th><th scope="col">Ação</th></tr></thead>
         <tbody>@for (item of page.items; track item.id) {
           <tr><td>{{item.id}}</td><td><a [routerLink]="['/acervo',item.id]">{{item.title}}</a></td><td>{{item.collection}}</td>
-            <td><a [routerLink]="['/admin/acervo',item.id,'editar']">Editar</a></td></tr>
+            <td><div class="actions"><a [routerLink]="['/admin/acervo',item.id,'editar']">Editar</a>
+              @if (removing() === null) {
+                <confirm-dialog title="Remover registro" [message]="'Remover o registro “' + item.title + '” e todos os seus arquivos permanentemente? Esta ação não pode ser desfeita.'" action="Remover" (confirmed)="remove(item.id)"/>
+              }
+            </div></td></tr>
         }</tbody>
       </table></div>
       <app-pagination [page]="page.page" [total]="pages(page.total,page.size)" (changed)="search(query().get('q') ?? '',$event)"/>

@@ -44,6 +44,18 @@
       <small id="publication-usage-help" class="field-hint">Explique como o público pode reutilizar o material. Use um modelo apenas se corresponder às permissões confirmadas; adapte o texto se necessário.</small>
     </label>
     <datalist id="publication-usage">@for (usage of usageSuggestions; track usage) {<option [value]="usage"></option>}</datalist>
+    @if (record.state().data?.files?.length) {
+      <section class="full" aria-label="Arquivos do registro">
+        <h2>Arquivos do registro</h2>
+        <file-gallery [files]="record.state().data?.files ?? []"/>
+      </section>
+    }
+    <fieldset class="full" [disabled]="busy()">
+      <legend>Adicionar arquivos</legend>
+      <p class="muted">Os arquivos selecionados serão adicionados ao salvar as alterações.</p>
+      <file-uploader (changed)="files.set($event)"/>
+    </fieldset>
+    @if (busy()) {<p class="full" role="status">{{progress() === null ? 'Salvando alterações…' : 'Enviando arquivos: ' + progress() + '%'}}</p>}
     @if (form.invalid && form.touched) {<p class="error full" role="alert">Verifique os campos obrigatórios, o ano e as coordenadas.</p>}
     @if (error()) {<p class="error full" role="alert">{{error()}}</p>}
     @if (message()) {<p class="full" role="status">{{message()}}</p>}

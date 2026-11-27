@@ -2,7 +2,11 @@ package br.org.memorias.application;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static br.org.memorias.application.InputChecks.bad;
 import static br.org.memorias.application.InputChecks.optional;
@@ -15,13 +19,50 @@ import br.org.memorias.persistence.PublicationRepository;
 public class RecordEditor {
     private final PublicationRepository records;
     private final CollectionRepository collections;
+    private final AttachmentService attachments;
+    private final TransactionTemplate transaction;
 
-    public RecordEditor(PublicationRepository records, CollectionRepository collections) {
+    public RecordEditor(PublicationRepository records, CollectionRepository collections,
+                        AttachmentService attachments, TransactionTemplate transaction) {
         this.records = records;
         this.collections = collections;
+        this.attachments = attachments;
+        this.transaction = transaction;
     }
 
     public void edit(long id, Edit edit) {
+        edit(id, edit, List.of());
+    }
+
+    public void edit(long id, Edit edit, List<MultipartFile> files) {
+        if (files.size() > 5) throw bad("Envie até cinco arquivos por vez.");
+        var createdKeys = new ArrayList<String>();
+        try {
+            transaction.executeWithoutResult(status -> {
+                long contribution = contribution(id);
+                update(id, edit);
+                for (MultipartFile file : files) attachments.save(contribution, file, createdKeys);
+            });
+        } catch (RuntimeException failure) {
+            attachments.remove(createdKeys);
+            throw failure;
+        }
+    }
+
+    public void delete(long id) {
+        List<String> keys = transaction.execute(status -> {
+            long contribution = contribution(id);
+            return records.delete(id, contribution);
+        });
+        attachments.remove(keys);
+    }
+
+    private long contribution(long id) {
+        return records.contributionForUpdate(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    private void update(long id, Edit edit) {
         String collection = required(edit.collectionSlug(), 50, "Coleção");
         if (!collections.exists(collection))
             throw bad("Coleção inválida.");

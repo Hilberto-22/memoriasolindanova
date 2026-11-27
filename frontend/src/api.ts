@@ -175,12 +175,22 @@ export class Api {
       ),
     );
   }
-  editMemory(id: number, payload: object) {
+  editMemory(id: number, payload: object, files: File[] = []) {
+    let body: object = payload;
+    if (files.length) {
+      const multipart = new FormData();
+      multipart.append('memory', new Blob([JSON.stringify(payload)], {type:'application/json'}));
+      for (const file of files) multipart.append('files', file, file.name);
+      body = multipart;
+    }
     return this.csrf().pipe(
       switchMap(() =>
-        this.http.put<void>("/api/admin/memories/" + id, payload),
+        this.http.put<void>("/api/admin/memories/" + id, body, {observe:'events', reportProgress:true}),
       ),
     );
+  }
+  deleteMemory(id: number) {
+    return this.csrf().pipe(switchMap(() => this.http.delete<void>("/api/admin/memories/" + id)));
   }
   catalog(filters: Record<string, string | number> = {}) {
     let params = new HttpParams();

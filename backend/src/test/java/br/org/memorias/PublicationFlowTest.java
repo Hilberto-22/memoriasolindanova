@@ -18,11 +18,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.Base64;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(properties = {
         "memorias.admin-user=admin",
@@ -102,6 +104,7 @@ class PublicationFlowTest {
         mvc.perform(get("/api/collections")).andExpect(jsonPath("$[0].count").value(1));
         verifyEditorialPublishing(session, adminCsrf, submission, review, memoryId);
         verifyOptionalDraftFields(session, adminCsrf);
+        verifyEditingAndRemoval(session, adminCsrf, memoryId, fileId);
         mvc.perform(post("/api/logout").session(session).cookie(adminCsrf)
                 .header("X-XSRF-TOKEN", adminCsrf.getValue())).andExpect(status().isNoContent());
         mvc.perform(get("/api/admin/dashboard")).andExpect(status().isUnauthorized());
@@ -308,6 +311,86 @@ class PublicationFlowTest {
         mvc.perform(delete("/api/admin/city-history/{id}", datedId).session(session).cookie(csrf)
                 .header("X-XSRF-TOKEN", csrf.getValue())).andExpect(status().isNoContent());
         mvc.perform(get("/api/city-history")).andExpect(jsonPath("$.length()").value(0));
+    }
+
+    private void verifyEditingAndRemoval(MockHttpSession session, Cookie csrf, long memoryId, long originalFile) throws Exception {
+        String edit = """
+                {"title":"Registro com novo arquivo","category":"Teste","collectionSlug":"cidade",
+                 "description":"Descrição atualizada","source":"Teste","credits":"Equipe","usage":"Consulta"}
+                """;
+        var metadata = new MockMultipartFile("memory", "", "application/json", edit.getBytes(StandardCharsets.UTF_8));
+        var pdf = new MockMultipartFile("files", "adicionado.pdf", "application/pdf",
+                "%PDF-1.4 arquivo adicionado".getBytes(StandardCharsets.UTF_8));
+        var invalid = new MockMultipartFile("files", "invalido.exe", "application/octet-stream", new byte[16]);
+        String url = "/api/admin/memories/" + memoryId;
+
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, url).file(metadata).file(pdf)
+                .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())).andExpect(status().isUnauthorized());
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, url).file(metadata).file(pdf)
+                .session(session)).andExpect(status().isForbidden());
+
+        long storedBefore = storedFiles();
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, url).file(metadata).file(pdf).file(invalid)
+                .session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/memories/{id}", memoryId))
+                .andExpect(jsonPath("$.title").value("Publicação de teste"))
+                .andExpect(jsonPath("$.files.length()").value(1));
+        assertEquals(storedBefore, storedFiles(), "Failed editing must clean up newly stored files");
+
+        var tooMany = multipart(org.springframework.http.HttpMethod.PUT, url).file(metadata);
+        for (int i = 0; i < 6; i++) tooMany.file(pdf);
+        mvc.perform(tooMany.session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/admin/memories/9223372036854775807")
+                .file(metadata).file(pdf).session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, url).file(metadata).file(pdf)
+                .session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isNoContent());
+        var updated = mvc.perform(get("/api/memories/{id}", memoryId))
+                .andExpect(jsonPath("$.title").value("Registro com novo arquivo"))
+                .andExpect(jsonPath("$.files.length()").value(2)).andReturn();
+        var files = json.readTree(updated.getResponse().getContentAsByteArray()).get("files");
+        long newFile = files.get(1).get("id").asLong();
+        mvc.perform(get("/api/files/{id}", originalFile)).andExpect(status().isOk());
+        mvc.perform(get("/api/files/{id}", newFile)).andExpect(status().isOk());
+        assertEquals(storedBefore + 1, storedFiles());
+
+        long contribution = db.sql("select contribution_id from memories where id=:id")
+                .param("id", memoryId).query(Long.class).single();
+        db.sql("update portal_content set featured_memory=:id").param("id", memoryId).update();
+        db.sql("update collections set cover_memory=:id where slug='cidade'").param("id", memoryId).update();
+        db.sql("update contributions set related_memory=:id where id<>:contribution")
+                .param("id", memoryId).param("contribution", contribution).update();
+        db.sql("insert into city_history(title,category,content,memory_id) values ('Vínculo','history','Texto',:id)")
+                .param("id", memoryId).update();
+
+        mvc.perform(delete(url).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())).andExpect(status().isUnauthorized());
+        mvc.perform(delete(url).session(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/memories/{id}", memoryId)).andExpect(status().isOk());
+        mvc.perform(delete(url).session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/memories/{id}", memoryId)).andExpect(status().isNotFound());
+        for (long file : new long[] {originalFile, newFile}) {
+            mvc.perform(get("/api/files/{id}", file)).andExpect(status().isNotFound());
+            mvc.perform(get("/api/admin/files/{id}", file).session(session)).andExpect(status().isNotFound());
+        }
+        assertEquals(storedBefore - 1, storedFiles(), "Deleting a record must remove all its stored files");
+        assertEquals(0L, db.sql("select count(*) from contributions where id=:id").param("id", contribution).query(Long.class).single());
+        assertEquals(0L, db.sql("select count(*) from contributions where related_memory=:id").param("id", memoryId).query(Long.class).single());
+        mvc.perform(get("/api/collections")).andExpect(jsonPath("$[0].coverMemory").doesNotExist());
+        mvc.perform(get("/api/portal-content")).andExpect(jsonPath("$.content.featuredMemory").doesNotExist());
+        mvc.perform(get("/api/city-history"))
+                .andExpect(jsonPath("$[0].title").value("Vínculo"))
+                .andExpect(jsonPath("$[0].memoryId").doesNotExist());
+        mvc.perform(delete(url).session(session).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+                .andExpect(status().isNotFound());
+    }
+
+    private long storedFiles() throws Exception {
+        try (var paths = Files.list(storage)) { return paths.count(); }
     }
 
     private Cookie csrf(MockHttpSession session) throws Exception {

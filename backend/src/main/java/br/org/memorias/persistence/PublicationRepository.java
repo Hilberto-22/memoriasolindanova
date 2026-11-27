@@ -1,5 +1,7 @@
 package br.org.memorias.persistence;
 
+import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -7,6 +9,25 @@ import org.springframework.stereotype.Repository;
 public class PublicationRepository {
     private final JdbcClient db;
     public PublicationRepository(JdbcClient db) { this.db = db; }
+
+    public Optional<Long> contributionForUpdate(long id) {
+        return db.sql("""
+                select c.id from contributions c join memories m on m.contribution_id=c.id
+                where m.id=:id for update of c, m
+                """).param("id", id).query(Long.class).optional();
+    }
+
+    public List<String> delete(long id, long contribution) {
+        var keys = db.sql("select storage_key from memory_files where contribution_id=:id")
+                .param("id", contribution).query(String.class).list();
+        db.sql("update portal_content set featured_memory=null where featured_memory=:id").param("id", id).update();
+        db.sql("update city_history set memory_id=null where memory_id=:id").param("id", id).update();
+        db.sql("update contributions set related_memory=null where related_memory=:id").param("id", id).update();
+        db.sql("delete from memory_files where contribution_id=:id").param("id", contribution).update();
+        db.sql("delete from memories where id=:id").param("id", id).update();
+        db.sql("delete from contributions where id=:id").param("id", contribution).update();
+        return keys;
+    }
 
     public void publish(long id, String category, String credits, String usage, Integer year, Double lat, Double lon) {
         db.sql("""
